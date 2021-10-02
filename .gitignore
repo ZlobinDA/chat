@@ -1,3 +1,7 @@
+.vs
+Debug
+.DS_Store
+
 # Prerequisites
 *.d
 

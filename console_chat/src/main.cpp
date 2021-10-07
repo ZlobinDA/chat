@@ -63,7 +63,10 @@
 
 */
 
+#include "ChatUser.h"
 #include <iostream>
+#include <limits>
+#include <vector>
 #include <string>
 using namespace std;
 
@@ -75,19 +78,16 @@ auto main()->int {
 	cout << endl;
 	cout << "Добро пожаловать в локальный консольный чат!" << endl;
 
-	// Прототип. Чат из двух пользователей. Для каждого пользователя хранится имя, логин и пароль. Все данные на английском языке.
-	// Прототип. Максимальное число пользователей в базе данных. Если больше, отказ от регистрации.
+	// Максимальное число пользователей в базе данных. Если больше, отказ от регистрации.
+	// Число может быть любым, для реализации возможности достижения границы задано маленькое число.
 	constexpr int maxUsers = 3;
-	// Расшифровка индексов массива userData.
-	constexpr int userName = 0;			// имя пользователя
-	constexpr int userLogin = 1;		// логин
-	constexpr int userPassword = 2;		// пароль
-	constexpr int userDataFields = 3;	// число полей для описания информации о пользователе. Используется при создании 2-х мерного массива.
-	string userData[maxUsers][userDataFields];
+
 	// Пароль администратора
 	constexpr int rootPassword = 123;
-	// Текущее число пользователей в чате. 
-	static int userCount = 0;
+
+	// Расшифровка индексов массива userData - база данных пользователей.
+	static vector <ChatUser> userData;
+
 	// Признак наличия пользователя в чате.
 	static bool userOnline = false;
 
@@ -105,14 +105,15 @@ auto main()->int {
 		}
 
 		// Возможность написать личное сообщение доступна при наличии более 2-х зарегистрированных пользователей в чате.
-		if (userOnline && userCount > 1) {
+		if (userOnline && userData.size() > 1) {
 			cout << "\t 5. Написать личное сообщение пользователю" << endl;
 		}
 		// Выводим список пользователей, зарегистрированных в чате.
-		if (userCount > 0) {
+		if (userData.size() > 0) {
 			string Users = "Пользователи, зарегистрированные в чате:";
-			for (auto i = 0; i < userCount; ++i) {
-				Users = Users + " " + userData[i][userLogin];
+			int registredUsersNumber = userData.size();
+			for (auto i = 0; i < registredUsersNumber; ++i) {
+				Users = Users + " " + userData[i].getNickname();
 			}
 			cout << Users << endl;
 		}
@@ -142,26 +143,32 @@ auto main()->int {
 			// @todo Обработка исключений, связанных с вводом.
 			string name;
 			getline(cin, name);
-			userData[number][userName] = name;
 
 			cout << "Придумайте логин:" << endl;
 			// @todo Обработка исключений, связанных с вводом.
 			string login;
 			getline(cin, login);
-			userData[number][userLogin] = login;
 			// @todo Логин должен быть уникальным. Если логин уже существует, повторный запрос логина.
 
 			cout << "Введите свой пароль:" << endl;
 			// @todo Обработка исключений, связанных с вводом.
 			string password;
 			getline(cin, password);
-			userData[number][userPassword] = password;
-			++userCount;
+
+			// Создаем нового пользователя. Данные вводятся в формате: логин - полное имя - пароль.
+			ChatUser newUser(login, name, password);
+
+			// Добавляем нового пользователя в базу данных. Подсчет числа пользователя производится через метод size.
+			userData.push_back(newUser);
 
 			break;
 		}
 		case 2:
 		{
+			if (userData.size() < 1) {
+				cout << "В чате еще нет зарегистрированных пользователей!" << endl;
+			}
+
 			cout << "Введите свой логин:" << endl;
 			// @todo Обработка исключений, связанных с вводом.
 			string login;
@@ -169,8 +176,9 @@ auto main()->int {
 			// Проверка наличия данного логина в базе.
 			bool isUser = false;
 			int number = -1; // номер пользователя в базе, используется при проверки пароля
-			for (auto i = 0; i < maxUsers; ++i) {
-				if (login == userData[i][userLogin]) {
+			int registredUsersNumber = userData.size();
+			for (auto i = 0; i < registredUsersNumber; ++i) {
+				if (login == userData[i].getNickname()) {
 					isUser = true;
 					number = i;
 					break;
@@ -188,9 +196,9 @@ auto main()->int {
 			string password;
 			getline(cin, password);
 			// Проверка соответствия пароля в базе и введенного пароля.
-			if (password == userData[number][userPassword]) {
-				cout << "Добро пожаловать, " << userData[number][userName] << "!" << endl;
-				currentUserLogin = userData[number][userLogin];
+			if (password == userData[number].getPassword()) {
+				cout << "Добро пожаловать, " << userData[number].getFullname() << "!" << endl;
+				currentUserLogin = userData[number].getNickname();
 				userOnline = true;
 			}
 			else {
@@ -224,22 +232,23 @@ auto main()->int {
 		case 5:
 		{
 			cout << "Выберите пользователя, которому хотите написать личное сообщение" << endl;
-			for (auto i = 0; i < userCount; ++i) {
+			int registredUsersNumber = userData.size();
+			for (auto i = 0; i < registredUsersNumber; ++i) {
 				// Пользователь не может отправлять личные сообщения себе
-				if (userData[i][userLogin] != currentUserLogin) {
-					cout << "\t " << (i + 1) << ". Написать сообщение пользователю " << userData[i][userLogin] << endl;
+				if (userData[i].getNickname() != currentUserLogin) {
+					cout << "\t " << (i + 1) << ". Написать сообщение пользователю " << userData[i].getNickname() << endl;
 				}
 			}
 			string number = "";
 			getline(cin, number);
 			// Ищем введенный (номер - 1) среди пользователей.
-			for (auto i{ 0 }; i < userCount; ++i) {
+			for (auto i{ 0 }; i < registredUsersNumber; ++i) {
 				if ((stoi(number) - 1) == i) {
-					cout << "Наберите текст сообщения для пользователя " << userData[i][userLogin] << ". Для отправки нажмите клавишу Enter" << endl;
+					cout << "Наберите текст сообщения для пользователя " << userData[i].getNickname() << ". Для отправки нажмите клавишу Enter" << endl;
 					string message = "";
 					// @todo Обработка исключений, связанных с вводом.
 					getline(cin, message);
-					cout << "[" << userData[i][userLogin] << "] у вас личное сообщение от пользователя " << 
+					cout << "[" << userData[i].getNickname() << "] у вас личное сообщение от пользователя " << 
 						"[" << currentUserLogin << "]: " << message << endl;
 				}
 			}

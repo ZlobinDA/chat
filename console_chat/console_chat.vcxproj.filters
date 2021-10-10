@@ -21,12 +21,24 @@
     <ClInclude Include="src\ChatUser.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\ChatUsersList.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\chat_exception.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\chat_getline.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\ChatUser.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ChatUsersList.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

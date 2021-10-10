@@ -21,9 +21,13 @@
   <ItemGroup>
     <ClInclude Include="src\ChatConstants.h" />
     <ClInclude Include="src\ChatUser.h" />
+    <ClInclude Include="src\ChatUsersList.h" />
+    <ClInclude Include="src\chat_exception.h" />
+    <ClInclude Include="src\chat_getline.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\ChatUser.cpp" />
+    <ClCompile Include="src\ChatUsersList.cpp" />
     <ClCompile Include="src\main.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
@@ -96,6 +100,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

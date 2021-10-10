@@ -9,6 +9,7 @@ class ChatUser								// Пользователь для включения в �
 {
 public:
 	ChatUser(std::string nickname, std::string fullname, std::string password);
+	ChatUser(std::string rootPassword);
 	bool verifyRegistration() const;		// Проверка имени, ника, пароля пользователя на допустимость
 	bool registerUser(USRNGRPIDTYPE id);	// Регистрация по списку в ChatUsersList
 
@@ -16,6 +17,7 @@ public:
 	std::string getNickname() const;
 	std::string getFullname() const;
 	std::string getPassword() const;
+	bool checkPassword(std::string password) const;
 	USRNGRPIDTYPE getId() const;
 	std::string getInfo() const;
 	friend std::ostream& operator<<(std::ostream& output, const ChatUser* chatUser);

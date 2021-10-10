@@ -9,6 +9,11 @@ ChatUser::ChatUser(std::string nickname, std::string fullname, std::string passw
 #endif            
 }
 
+ChatUser::ChatUser(std::string rootPassword) : _nickname("root"), _fullname("root"), _password(rootPassword),
+                                                _id(0), _registered(true), _groupsCount(0)
+{
+}
+
 bool ChatUser::verifyRegistration() const
 {
     if(_nickname.c_str() != "root")
@@ -57,6 +62,11 @@ std::string ChatUser::getFullname() const
 std::string ChatUser::getPassword() const
 {
     return _password;
+}
+
+bool ChatUser::checkPassword(std::string password) const
+{
+    return password == _password;
 }
 
 USRNGRPIDTYPE ChatUser::getId() const

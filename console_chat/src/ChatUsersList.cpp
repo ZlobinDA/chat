@@ -248,7 +248,7 @@ bool ChatUsersList::loadFromFile()
 	else
 	{
 #ifdef _DEBUG
-		std::cout << "[FAILED] Can't open '" << fname << "' for writing" << std::endl;
+		std::cout << "[FAILED] Can't open '" << fname << "' for reading" << std::endl;
 #endif
 		return false;
 	}

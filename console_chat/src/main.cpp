@@ -34,6 +34,7 @@ auto main()->int {
 
 	// userList - база данных пользователей.
 	ChatUsersList* userList = new ChatUsersList(rootPassword);
+	userList->loadFromFile();
 
 	// ѕризнак наличи€ пользовател€ в чате.
 	static bool userOnline = false;
@@ -148,6 +149,7 @@ auto main()->int {
 
 			if (password == rootPassword) {
 				cout << "–абота чата завершена" << endl;
+				userList->saveToFile();
 				return 0;
 			}
 			else {

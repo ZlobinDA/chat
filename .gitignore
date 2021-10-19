@@ -37,3 +37,15 @@ Debug
 
 # Database files
 *.dat
+
+# Release files
+*.recipe
+*.iobj
+*.ipdb
+*.log
+*.pdb
+*.tlog
+*.lastbuildstate
+*.tlog
+*.FileListAbsolute.txt
+

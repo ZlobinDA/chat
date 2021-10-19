@@ -34,3 +34,6 @@ Debug
 *.exe
 *.out
 *.app
+
+# Database files
+*.dat

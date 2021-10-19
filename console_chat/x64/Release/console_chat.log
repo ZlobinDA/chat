@@ -1,0 +1,9 @@
+﻿  main.cpp
+C:\Main\Experiments\CommonProg\!SF\Work\Final\sf-chat\console_chat\src\chat_getline.h(23,4): warning C4984: "if constexpr" — расширение языка C++17
+C:\Main\Experiments\CommonProg\!SF\Work\Final\sf-chat\console_chat\src\chat_getline.h(35,9): warning C4984: "if constexpr" — расширение языка C++17
+  Создание кода
+  3 of 252 functions ( 1.2%) were compiled, the rest were copied from previous compilation.
+    0 functions were new in current compilation
+    25 functions had inline decision re-evaluated but remain unchanged
+  Создание кода завершено
+  console_chat.vcxproj -> C:\Main\Experiments\CommonProg\!SF\Work\Final\sf-chat\console_chat\x64\Release\console_chat.exe

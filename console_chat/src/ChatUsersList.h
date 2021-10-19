@@ -9,10 +9,14 @@
 #define FILEUSRLISTPREFIX "DB_users"
 #define FILEUSRLISTPOSTFIX ".dat"
 
-class ChatUsersList													// База зарегистрированных пользователей
+/*
+Класс, содержащий список всех зарегистрированных в чате пользователей и основные методы для работы с ними.
+*/
+
+class ChatUsersList
 {
 public:
-	ChatUsersList(std::string rootPassword);
+	ChatUsersList(std::string rootPassword); // По параметру "rootPassword" создаётся суперпользователь и выделяется память.
 	~ChatUsersList();
 
 	USRNGRPIDTYPE getUsersCount() const;
@@ -25,11 +29,11 @@ public:
 	bool deleteUserById(USRNGRPIDTYPE id);
 	USRNGRPIDTYPE findUserByNickname(std::string nickname) const;
 	bool deleteUserByNickname(std::string nickname);
-	void clearList();
+	void clearList();												// Удаляем всех, кроме root
 	bool checkPassword(USRNGRPIDTYPE id, std::string password) const;
 
 	bool saveToFile();												// Сохранение базы в текстовый файл
-	bool loadFromFile();											// Очистка и чтение базы из текстового файла
+	bool loadFromFile();											// Чтение базы из текстового файла
 	// TODO: перейти на бинарные файлы
 
 private:

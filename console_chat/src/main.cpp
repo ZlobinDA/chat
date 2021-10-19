@@ -76,10 +76,8 @@ auto main()->int {
 		{
 			// Порядковый номер регистрируемого пользователя.
 			// Использую отдельную переменную, что не путаться с userOnline
-			static int number = -1;
-			++number;
-			if (number > maxUsers - 1) {
-				--number;
+			// pam: заменил static int number на userList->getUsersCount()
+			if (userList->getUsersCount() >= maxUsers) {
 				cout << "Вы не можете зарегистрироваться! Пользовательская база данных переполнена" << endl;
 				break;
 			}
@@ -98,7 +96,13 @@ auto main()->int {
 
 			// Создаем нового пользователя. Данные вводятся в формате: логин - полное имя - пароль.
 			ChatUser* newUser = new ChatUser(login, name, password);
-			newUser->registerUser(userList->getUsersCount() + 1);
+			// 
+			if (!newUser->registerUser(userList->getUsersCount() + 1))
+			{
+				// pam: сюда попадём, если verifyRegistration() не удалась. Пока она проверяет только login=root
+				cout << "Вы не можете зарегистрироваться! Прочтите правила пользования чатом" << endl;
+				break;
+			}
 
 			// Добавляем нового пользователя в базу данных. Подсчет числа пользователя производится через метод size.
 			userList->addUser(newUser);

@@ -16,10 +16,10 @@ ChatUser::ChatUser(std::string rootPassword) : _nickname("root"), _fullname("roo
 
 bool ChatUser::verifyRegistration() const
 {
-    if(_nickname.c_str() != "root")
+    if(_nickname.compare("root") != 0)
         return true;
 
-    // TODO: проверка по списку/файлу недопустимых лексем
+    // TODO: проверка по списку/файлу других недопустимых лексем
     return false;
 
 }

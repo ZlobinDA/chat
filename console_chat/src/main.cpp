@@ -42,6 +42,8 @@ auto main()->int {
 	// Работа чата организована в виде бесконечного цикла.
 	static string currentUserLogin = ""; // логин текущего активного пользователя в чате
 										// pam: предлагаю заменить на целочисленный currentUserID
+	USRNGRPIDTYPE currentUserID = USRWRONGID;
+
 	for (;;) {
 		cout << endl;
 		cout << "Выберите действие:" << endl;
@@ -90,6 +92,12 @@ auto main()->int {
 			cout << "Придумайте логин:" << endl;
 			string login = chat_getline();
 			// @todo Логин должен быть уникальным. Если логин уже существует, повторный запрос логина.
+			// pam: FIXED
+			if (userList->findUserByNickname(login) != USRWRONGID)
+			{
+				cout << "Вы не можете зарегистрироваться! Пользователь [" << login << "] уже зарегистрирован" << endl;
+				break;
+			}
 
 			cout << "Введите свой пароль:" << endl;
 			string password = chat_getline();
@@ -99,7 +107,7 @@ auto main()->int {
 			// 
 			if (!newUser->registerUser(userList->getUsersCount() + 1))
 			{
-				// pam: сюда попадём, если verifyRegistration() не удалась. Пока она проверяет только login=root
+				// сюда попадём, если verifyRegistration() не удалась. Пока она проверяет только login=root
 				cout << "Вы не можете зарегистрироваться! Прочтите правила пользования чатом" << endl;
 				break;
 			}
@@ -134,7 +142,7 @@ auto main()->int {
 			// Проверка соответствия пароля в базе и введенного пароля.
 			if (userList->checkPassword(number, password)) {
 				cout << "Добро пожаловать, " << userList->getFullname(number) << "!" << endl;
-				currentUserLogin = userList->getNickname(number);
+				currentUserID = number;
 				userOnline = true;
 			}
 			else {
@@ -147,7 +155,6 @@ auto main()->int {
 			cout << "Введите пароль администратора:" << endl;
 			string password = chat_getline();
 
-			//if (password == rootPassword) {
 			if (userList->checkPassword(0, password))
 			{
 				cout << "Работа чата завершена" << endl;
@@ -163,7 +170,7 @@ auto main()->int {
 		{
 			cout << "Наберите текст сообщения. Для отправки нажмите клавишу Enter" << endl;
 			string message = chat_getline();;
-			cout << "[" << currentUserLogin << "]: " << message << endl;
+			cout << "[" << userList->getNickname(currentUserID) << "]: " << message << endl;
 		}
 		break;
 		case 5:
@@ -171,18 +178,18 @@ auto main()->int {
 			cout << "Выберите пользователя, которому хотите написать личное сообщение" << endl;
 			for (auto i = 1; i <= userList->getUsersCount(); ++i) {
 				// Пользователь не может отправлять личные сообщения себе
-				if ( (userList -> getNickname(i).compare(currentUserLogin)) != 0 ) {
+				if (i != currentUserID) {
 					cout << "\t " << i << ". Написать сообщение пользователю " << userList->getNickname(i) << endl;
 				}
 			}
 			int number = chat_getline<int>();;
 			// Ищем введенный номер среди пользователей.
 			for (auto i{ 1 }; i <= userList->getUsersCount(); ++i) {
-				if ( ( (number) == i )&&(userList->getNickname( number ).compare(currentUserLogin) ) ) {
+				if ( (number == i) && (number != currentUserID)) {
 					cout << "Наберите текст сообщения для пользователя " << userList->getNickname(i) << ". Для отправки нажмите клавишу Enter" << endl;
 					string message = chat_getline();
 					cout << "[" << userList->getNickname(i) << "] у вас личное сообщение от пользователя " <<
-						"[" << currentUserLogin << "]: " << message << endl;
+						"[" << userList->getNickname(currentUserID) << "]: " << message << endl;
 				}
 			}
 			break;

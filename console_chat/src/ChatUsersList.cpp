@@ -1,6 +1,6 @@
 ﻿#include "ChatUsersList.h"
 
-ChatUsersList::ChatUsersList(std::string rootPassword)
+ChatUsersList::ChatUsersList(std::string rootPassword) // Программу запускает администратор, делая себя нулевым пользователем
 {
 	_usersList = new ChatUser * [USRMAXCOUNT];
 	ChatUser* rootUser = new ChatUser(rootPassword);
@@ -10,7 +10,7 @@ ChatUsersList::ChatUsersList(std::string rootPassword)
 
 ChatUsersList::~ChatUsersList()
 {
-	for (USRNGRPIDTYPE i = 0; i < _usersCount; i++)
+	for (USRNGRPIDTYPE i = 0; i <= _usersCount; i++) // удаляем всех, включая администратора
 	{
 		delete _usersList[i];
 	}
@@ -57,8 +57,7 @@ bool ChatUsersList::addUser(ChatUser* newUser)
 	{
 		if (newUser->isRegistered())
 		{
-			_usersList[_usersCount] = newUser;
-			++_usersCount;
+			_usersList[++_usersCount] = newUser;
 #ifdef _DEBUG
 			std::cout << "[  OK  ] Added " << newUser << " to position N" << int(_usersCount) << std::endl;
 #endif
@@ -101,7 +100,8 @@ bool ChatUsersList::deleteUserById(USRNGRPIDTYPE id)
 #endif
 		for (USRNGRPIDTYPE i = id; i < _usersCount - 1; ++i)
 		{
-			_usersList[i] = _usersList[i + 1];
+			_usersList[i] = _usersList[i + 1]; // Поочерёдно сдвигаем пользователей вниз по списку
+			_usersList[i]--; // Уменьшаем идентификатор _id у сдвинутого вниз пользователя.
 		}
 		--_usersCount;
 		delete userToDelete;
@@ -119,9 +119,9 @@ bool ChatUsersList::deleteUserById(USRNGRPIDTYPE id)
 
 USRNGRPIDTYPE ChatUsersList::findUserByNickname(std::string nickname) const
 {
-	for (USRNGRPIDTYPE i = 0; i < _usersCount; i++)
+	for (USRNGRPIDTYPE i = 1; i <= _usersCount; i++)
 	{
-		if (_usersList[i]->getNickname() == nickname)
+		if (_usersList[i]->getNickname().compare(nickname) == 0)
 		{
 			return i;
 		}
@@ -137,7 +137,7 @@ bool ChatUsersList::deleteUserByNickname(std::string nickname)
 
 void ChatUsersList::clearList()
 {
-	for (USRNGRPIDTYPE i = 0; i < _usersCount; i++)
+	for (USRNGRPIDTYPE i = 1; i < _usersCount; i++) // Удаляем всех, кроме root
 	{
 		delete _usersList[i];
 	}
@@ -146,13 +146,14 @@ void ChatUsersList::clearList()
 
 bool ChatUsersList::checkPassword(USRNGRPIDTYPE id, std::string password) const
 {
-	if (id <= _usersCount)
-		return _usersList[id]->checkPassword(password);
-	else
-		return false;
+	return _usersList[id]->checkPassword(password);
 }
 
-
+/*
+Сохранение текущего списка пользователей в текстовый файл.
+Файл создаётся, либо перезаписывается.
+TODO: обработка исключений записи (кончилось место на диске и т.п.) 
+*/
 bool ChatUsersList::saveToFile()
 {
 	std::string fname = FILEUSRLISTPREFIX + std::string("") + FILEUSRLISTPOSTFIX;
@@ -164,10 +165,10 @@ bool ChatUsersList::saveToFile()
 #ifdef _DEBUG
 		std::cout << "[  OK  ] Opened '" << fname << "' for writing" << std::endl;
 #endif
-		usersFile << _usersCount << std::endl;
-		for (USRNGRPIDTYPE i = 0; i < _usersCount; ++i)
+		usersFile << _usersCount << std::endl; // В самом начале записываем число пользователей
+		for (USRNGRPIDTYPE i = 1; i <= _usersCount; ++i)
 		{
-			usersFile << "==========================================" << std::endl; // Любая шапка
+			usersFile << "==========================================" << std::endl; // Может быть любой разделитель в одну строку
 			usersFile << _usersList[i]->getNickname() << std::endl;
 			usersFile << _usersList[i]->getFullname() << std::endl;
 			usersFile << _usersList[i]->getPassword() << std::endl;
@@ -191,7 +192,11 @@ bool ChatUsersList::saveToFile()
 }
 
 
-
+/*
+Чтение списка пользователей из текстового файла.
+Если файл не пустой, вначале текущее содержимое списка очищается.
+TODO: обработка ошибок и исключений при чтении (неверный формат и т.п.)
+*/
 bool ChatUsersList::loadFromFile()
 {
 	std::string fname = FILEUSRLISTPREFIX + std::string("") + FILEUSRLISTPOSTFIX;
@@ -207,25 +212,25 @@ bool ChatUsersList::loadFromFile()
 		std::cout << "[  OK  ] Opened '" << fname << "' for reading" << std::endl;
 #endif
 
-		usersFile >> usersCount;
+		usersFile >> usersCount;					// Читаем число пользователей в файле
 		std::getline(usersFile, tmpBuffer);			// Перенос строки
 		if (usersCount > 0)
 			this->clearList();						// Чистим базу пользователей перед чтением новой из файла
 
-		for (USRNGRPIDTYPE i = 0; i < usersCount; ++i)
+		for (USRNGRPIDTYPE i = 1; i <= usersCount; ++i)
 		{
-			std::getline(usersFile, tmpBuffer);		// Пропускаем шапку
-			std::cout << tmpBuffer << std::endl;
+			std::getline(usersFile, tmpBuffer);		// Пропускаем разделитель в одну строку
+			//std::cout << tmpBuffer << std::endl;
 
-			usersFile >> nickname;  // nickname
-			std::getline(usersFile, tmpBuffer);
+			usersFile >> nickname;					// nickname
+			std::getline(usersFile, tmpBuffer);		// Перенос строки
 			//std::cout << "nickname:" << nickname << std::endl;
 
 			std::getline(usersFile, fullname);		// fullname - читаем так, потому что может содержать пробел!
 			//std::cout << "fullname:" << fullname << std::endl;
 
-			usersFile >> password;  // password
-			std::getline(usersFile, tmpBuffer);
+			usersFile >> password;					// password
+			std::getline(usersFile, tmpBuffer);		// Перенос строки
 			//std::cout << "password:" << password << std::endl;
 			
 			// TODO: чтение _groupsCount и _groupsIndexes!
@@ -248,7 +253,7 @@ bool ChatUsersList::loadFromFile()
 	else
 	{
 #ifdef _DEBUG
-		std::cout << "[FAILED] Can't open '" << fname << "' for writing" << std::endl;
+		std::cout << "[FAILED] Can't open '" << fname << "' for reading" << std::endl;
 #endif
 		return false;
 	}

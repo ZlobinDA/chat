@@ -1,6 +1,7 @@
 .vs
 Debug
 .DS_Store
+Release
 
 # Prerequisites
 *.d
@@ -34,3 +35,18 @@ Debug
 *.exe
 *.out
 *.app
+
+# Database files
+*.dat
+
+# Release files
+*.recipe
+*.iobj
+*.ipdb
+*.log
+*.pdb
+*.tlog
+*.lastbuildstate
+*.tlog
+*.FileListAbsolute.txt
+

@@ -34,12 +34,16 @@ auto main()->int {
 
 	// userList - база данных пользователей.
 	ChatUsersList* userList = new ChatUsersList(rootPassword);
+	userList->loadFromFile();
 
 	// Признак наличия пользователя в чате.
 	static bool userOnline = false;
 
 	// Работа чата организована в виде бесконечного цикла.
 	static string currentUserLogin = ""; // логин текущего активного пользователя в чате
+										// pam: предлагаю заменить на целочисленный currentUserID
+	USRNGRPIDTYPE currentUserID = USRWRONGID;
+
 	for (;;) {
 		cout << endl;
 		cout << "Выберите действие:" << endl;
@@ -59,8 +63,7 @@ auto main()->int {
 		if (userList->getUsersCount() >= 1) {
 
 			string Users = "Пользователи, зарегистрированные в чате:";
-			USRNGRPIDTYPE registredUsersNumber = userList->getUsersCount();
-			for (auto i = 0; i < registredUsersNumber; ++i) {
+			for (auto i = 1; i <= userList->getUsersCount(); ++i) {
 				Users = Users + " " + userList->getNickname(i);
 			}
 			cout << Users << endl;
@@ -75,10 +78,8 @@ auto main()->int {
 		{
 			// Порядковый номер регистрируемого пользователя.
 			// Использую отдельную переменную, что не путаться с userOnline
-			static int number = -1;
-			++number;
-			if (number > maxUsers - 1) {
-				--number;
+			// pam: заменил static int number на userList->getUsersCount()
+			if (userList->getUsersCount() >= maxUsers) {
 				cout << "Вы не можете зарегистрироваться! Пользовательская база данных переполнена" << endl;
 				break;
 			}
@@ -91,38 +92,46 @@ auto main()->int {
 			cout << "Придумайте логин:" << endl;
 			string login = chat_getline();
 			// @todo Логин должен быть уникальным. Если логин уже существует, повторный запрос логина.
+			// pam: FIXED
+			if (userList->findUserByNickname(login) != USRWRONGID)
+			{
+				cout << "Вы не можете зарегистрироваться! Пользователь [" << login << "] уже зарегистрирован" << endl;
+				break;
+			}
 
 			cout << "Введите свой пароль:" << endl;
 			string password = chat_getline();
 
 			// Создаем нового пользователя. Данные вводятся в формате: логин - полное имя - пароль.
 			ChatUser* newUser = new ChatUser(login, name, password);
-			newUser->registerUser(userList->getUsersCount() + 1);
+			// 
+			if (!newUser->registerUser(userList->getUsersCount() + 1))
+			{
+				// сюда попадём, если verifyRegistration() не удалась. Пока она проверяет только login=root
+				cout << "Вы не можете зарегистрироваться! Прочтите правила пользования чатом" << endl;
+				break;
+			}
 
-			// Добавляем нового пользователя в базу данных. Подсчет числа пользователя производится через метод size.
+			// Добавляем нового пользователя в базу данных. Подсчет числа пользователя производится через метод getUsersCount.
 			userList->addUser(newUser);
 
 			break;
 		}
 		case 2:
 		{
-			if (userList->getUsersCount() < 2) {
+			if (userList->getUsersCount() < 1) { // root'у пока входить для написания сообщений нельзя
 				cout << "В чате еще нет зарегистрированных пользователей!" << endl;
+				break;
 			}
 
 			cout << "Введите свой логин:" << endl;
 			string login = chat_getline();;
 
 			// Проверка наличия данного логина в базе.
-			bool isUser = false;
-
 			USRNGRPIDTYPE number = userList->findUserByNickname(login);
-			if (number != USRWRONGID) {
-				isUser = true;
-			}
 
 			// Проверили всю базу и не нашли пользователя в базе.
-			if (!isUser) {
+			if (number == USRWRONGID) {
 				cout << "Пользователь с данным логином не зарегистрирован!" << endl;
 				break;
 			}
@@ -133,7 +142,7 @@ auto main()->int {
 			// Проверка соответствия пароля в базе и введенного пароля.
 			if (userList->checkPassword(number, password)) {
 				cout << "Добро пожаловать, " << userList->getFullname(number) << "!" << endl;
-				currentUserLogin = userList->getNickname(number);
+				currentUserID = number;
 				userOnline = true;
 			}
 			else {
@@ -146,8 +155,10 @@ auto main()->int {
 			cout << "Введите пароль администратора:" << endl;
 			string password = chat_getline();
 
-			if (password == rootPassword) {
+			if (userList->checkPassword(0, password))
+			{
 				cout << "Работа чата завершена" << endl;
+				userList->saveToFile();
 				return 0;
 			}
 			else {
@@ -159,27 +170,26 @@ auto main()->int {
 		{
 			cout << "Наберите текст сообщения. Для отправки нажмите клавишу Enter" << endl;
 			string message = chat_getline();;
-			cout << "[" << currentUserLogin << "]: " << message << endl;
+			cout << "[" << userList->getNickname(currentUserID) << "]: " << message << endl;
 		}
 		break;
 		case 5:
 		{
 			cout << "Выберите пользователя, которому хотите написать личное сообщение" << endl;
-			USRNGRPIDTYPE registredUsersNumber = userList->getUsersCount();
-			for (auto i = 0; i < registredUsersNumber; ++i) {
+			for (auto i = 1; i <= userList->getUsersCount(); ++i) {
 				// Пользователь не может отправлять личные сообщения себе
-				if (userList->getNickname(i) != currentUserLogin) {
-					cout << "\t " << (i + 1) << ". Написать сообщение пользователю " << userList->getNickname(i) << endl;
+				if (i != currentUserID) {
+					cout << "\t " << i << ". Написать сообщение пользователю " << userList->getNickname(i) << endl;
 				}
 			}
 			int number = chat_getline<int>();;
-			// Ищем введенный (номер - 1) среди пользователей.
-			for (auto i{ 0 }; i < registredUsersNumber; ++i) {
-				if ((number - 1) == i) {
-					cout << "Наберите текст сообщения для пользователя " << userList->getNickname(i) << ". Для отправки нажмите клавишу Enter" << endl; // ########### аналог
+			// Ищем введенный номер среди пользователей.
+			for (auto i{ 1 }; i <= userList->getUsersCount(); ++i) {
+				if ( (number == i) && (number != currentUserID)) {
+					cout << "Наберите текст сообщения для пользователя " << userList->getNickname(i) << ". Для отправки нажмите клавишу Enter" << endl;
 					string message = chat_getline();
 					cout << "[" << userList->getNickname(i) << "] у вас личное сообщение от пользователя " <<
-						"[" << currentUserLogin << "]: " << message << endl;
+						"[" << userList->getNickname(currentUserID) << "]: " << message << endl;
 				}
 			}
 			break;

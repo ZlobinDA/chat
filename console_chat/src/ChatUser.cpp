@@ -1,29 +1,45 @@
 ﻿#include "ChatUser.h"
 
 ChatUser::ChatUser(std::string nickname, std::string fullname, std::string password) : _nickname(nickname), _fullname(fullname), _password(password),
-                                                                                        _id(USRWRONGID), _registered(false), _groupsCount(0)
+                                                                                        _id(USRWRONGID), _registered(false)
 {
-    _groupsIndexes = new USRNGRPIDTYPE * [GRPMAXCOUNT];
+//    _groupsIndexes = new USRNGRPIDTYPE * [GRPMAXCOUNT]; // Пока работаем без групп
 #ifdef _DEBUG
     std::cout << "[  OK  ] Created user " << fullname << " a.k.a " << nickname << std::endl;
 #endif            
 }
 
+/*
+Конструктор для пользователя с UID 0.
+registerUser для него не требуется.
+*/
 ChatUser::ChatUser(std::string rootPassword) : _nickname("root"), _fullname("root"), _password(rootPassword),
-                                                _id(0), _registered(true), _groupsCount(0)
+                                                _id(0), _registered(true)
 {
 }
 
+/*
+private-функция для проверки допустимости введённых значений Имя-Ник-Пароль
+Вынесена отдельно, т.к. должна содержать поиск по базе лексем
+*/
 bool ChatUser::verifyRegistration() const
 {
-    if(_nickname.c_str() != "root")
-        return true;
+    if(_nickname.compare("root") == 0)
+        return false;
+    // TODO: проверка по списку/файлу других недопустимых лексем
+    
+    if(_password.length() == 0)
+        return false;
+    
+    return true;
 
-    // TODO: проверка по списку/файлу недопустимых лексем
-    return false;
 
 }
 
+/*
+Функция регистрации пользователя.
+Присваивает уникальный идентификатор пользователя при условии допустимости введённых значений
+*/
 bool ChatUser::registerUser(USRNGRPIDTYPE id)
 {
     if (verifyRegistration())
@@ -42,6 +58,12 @@ bool ChatUser::registerUser(USRNGRPIDTYPE id)
 #endif
         return false;
     }
+}
+
+ChatUser ChatUser::operator--()
+{
+    _id--;
+    return *this;
 }
 
 bool ChatUser::isRegistered() const
@@ -66,7 +88,7 @@ std::string ChatUser::getPassword() const
 
 bool ChatUser::checkPassword(std::string password) const
 {
-    return password == _password;
+    return (_password.compare(password) == 0);
 }
 
 USRNGRPIDTYPE ChatUser::getId() const
@@ -82,10 +104,9 @@ std::string ChatUser::getInfo() const
         retVal = retVal + ", registered";
     else
         retVal = retVal + ", not registered";
-    // TODO: запилить вывод _groupsIndexes
+    // TODO: добавить вывод _groupsIndexes
     return retVal;
 }
-
 
 std::ostream& operator<<(std::ostream& output, const ChatUser* chatUser)
 {

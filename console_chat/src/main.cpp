@@ -40,9 +40,7 @@ auto main()->int {
 	static bool userOnline = false;
 
 	// –абота чата организована в виде бесконечного цикла.
-	static string currentUserLogin = ""; // логин текущего активного пользовател€ в чате
-										// pam: предлагаю заменить на целочисленный currentUserID
-	USRNGRPIDTYPE currentUserID = USRWRONGID;
+	userNGroupIdType currentUserID = userWrongId; // »дентификатор текущего активного пользовател€ в чате
 
 	for (;;) {
 		cout << endl;
@@ -93,7 +91,7 @@ auto main()->int {
 			string login = chat_getline();
 			// @todo Ћогин должен быть уникальным. ≈сли логин уже существует, повторный запрос логина.
 			// pam: FIXED
-			if (userList->findUserByNickname(login) != USRWRONGID)
+			if (userList->findUserByNickname(login) != userWrongId)
 			{
 				cout << "¬ы не можете зарегистрироватьс€! ѕользователь [" << login << "] уже зарегистрирован" << endl;
 				break;
@@ -128,10 +126,10 @@ auto main()->int {
 			string login = chat_getline();;
 
 			// ѕроверка наличи€ данного логина в базе.
-			USRNGRPIDTYPE number = userList->findUserByNickname(login);
+			userNGroupIdType number = userList->findUserByNickname(login);
 
 			// ѕроверили всю базу и не нашли пользовател€ в базе.
-			if (number == USRWRONGID) {
+			if (number == userWrongId) {
 				cout << "ѕользователь с данным логином не зарегистрирован!" << endl;
 				break;
 			}

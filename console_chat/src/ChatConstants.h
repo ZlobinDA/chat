@@ -2,33 +2,35 @@
 
 
 //===================================
-// Тип счётчика пользователей и групп
+// Тип счётчика пользователей и групп "userNGroupIdType"
 // Чтобы не случилось, как в Telegram ( https://habr.com/ru/news/t/578872/ ):
-#define USRNGRPIDTYPE int16_t 
+//typedef int16_t userNGroupIdType;
+using userNGroupIdType = int16_t;
 // Для начала - до ~32766 пользователей и групп
 // ! тип ДОЛЖЕН быть ЗНАКОВЫМ !
 // id>=0 - id пользователей, id=0 - суперпользователь, id<0 - id групп
-// 
-// Максимальное число десятичных знаков для записи переменной типа USRNGRPIDTYPE
-#define IDTYPEDIGITS10 3
+
+// Максимальное число десятичных знаков для записи переменной типа userNGroupIdType
+constexpr int idTypeDigits = 3;
 // TODO: перевести на constexpr?
 
 // Максимально допустимое число пользователей: root(id=0), id=1, id=2,...max-2
-#define USRMAXCOUNT std::numeric_limits<USRNGRPIDTYPE>::max()-1
+constexpr userNGroupIdType userMaxCount = std::numeric_limits<userNGroupIdType>::max() - 1;
 // Недопустимый индекс пользователя
-#define USRWRONGID std::numeric_limits<USRNGRPIDTYPE>::max()
+constexpr userNGroupIdType userWrongId = std::numeric_limits<userNGroupIdType>::max();
 // Максимально допустимое число групп: id=min+1, id=min+2, id=min+3, ...-1
-#define GRPMAXCOUNT std::numeric_limits<USRNGRPIDTYPE>::max()-1
+constexpr userNGroupIdType groupsMaxCount = std::numeric_limits<userNGroupIdType>::max() - 1;
 // Недопустимый индекс группы
-#define GRPWRONGID std::numeric_limits<USRNGRPIDTYPE>::min()
+constexpr userNGroupIdType groupWrongId = std::numeric_limits<userNGroupIdType>::min();
 
 
 //=======================
-// Тип счётчика сообщений
-#define MESSAGEIDTYPE uint16_t
+// Тип счётчика сообщений "messageIdType"
+using messageIdType = uint16_t;
 // Для экономии, пусть будет беззнаковым
 
 // Максимально допустимое число сообщений
-#define MSGMAXCOUNT std::numeric_limits<MESSAGEIDTYPE>::max()-1
+constexpr messageIdType messageMaxCount = std::numeric_limits<messageIdType>::max() - 1;
 // Недопустимый индекс сообщения
-#define MSGWRONGID std::numeric_limits<MESSAGEIDTYPE>::max()
+constexpr messageIdType messageWrongId = std::numeric_limits<messageIdType>::max();
+

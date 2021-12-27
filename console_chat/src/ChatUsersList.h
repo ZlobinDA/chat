@@ -6,8 +6,8 @@
 #include "ChatUser.h"
 #include "ChatConstants.h"
 
-#define FILEUSRLISTPREFIX "DB_users"
-#define FILEUSRLISTPOSTFIX ".dat"
+constexpr char fileUserListPrefix[] = "DB_users";
+constexpr char fileUserListPostfix[] = ".dat";
 
 /*
 Класс, содержащий список всех зарегистрированных в чате пользователей и основные методы для работы с ними.
@@ -16,21 +16,21 @@
 class ChatUsersList
 {
 public:
-	ChatUsersList(std::string rootPassword); // По параметру "rootPassword" создаётся суперпользователь и выделяется память.
+	ChatUsersList(const std::string& rootPassword); // По параметру "rootPassword" создаётся суперпользователь и выделяется память.
 	~ChatUsersList();
 
-	USRNGRPIDTYPE getUsersCount() const;
+	userNGroupIdType getUsersCount() const;
 	bool isEmpty() const;
 	bool isFull() const;
 
-	std::string getNickname(USRNGRPIDTYPE id);
-	std::string getFullname(USRNGRPIDTYPE id);
+	std::string getNickname(const userNGroupIdType& id);
+	std::string getFullname(const userNGroupIdType& id);
 	bool addUser(ChatUser* newUser);								// Добавление зарегистрированного пользователя
-	bool deleteUserById(USRNGRPIDTYPE id);
-	USRNGRPIDTYPE findUserByNickname(std::string nickname) const;
-	bool deleteUserByNickname(std::string nickname);
+	bool deleteUserById(const userNGroupIdType& id);
+	userNGroupIdType findUserByNickname(const std::string& nickname) const;
+	bool deleteUserByNickname(const std::string& nickname);
 	void clearList();												// Удаляем всех, кроме root
-	bool checkPassword(USRNGRPIDTYPE id, std::string password) const;
+	bool checkPassword(const userNGroupIdType& id, const std::string& password) const;
 
 	bool saveToFile();												// Сохранение базы в текстовый файл
 	bool loadFromFile();											// Чтение базы из текстового файла
@@ -38,7 +38,7 @@ public:
 
 private:
 	ChatUser** _usersList;
-	USRNGRPIDTYPE _usersCount;
+	userNGroupIdType _usersCount;
 
 };
 

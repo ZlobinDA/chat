@@ -1,9 +1,9 @@
 ﻿#include "ChatUser.h"
 
-ChatUser::ChatUser(std::string nickname, std::string fullname, std::string password) : _nickname(nickname), _fullname(fullname), _password(password),
-                                                                                        _id(USRWRONGID), _registered(false)
+ChatUser::ChatUser(const std::string& nickname, const std::string& fullname, const std::string& password) : 
+                    _nickname(nickname), _fullname(fullname), _password(password), _id(userWrongId), _registered(false)
 {
-//    _groupsIndexes = new USRNGRPIDTYPE * [GRPMAXCOUNT]; // Пока работаем без групп
+//    _groupsIndexes = new userNGroupIdType * [groupsMaxCount]; // Пока работаем без групп
 #ifdef _DEBUG
     std::cout << "[  OK  ] Created user " << fullname << " a.k.a " << nickname << std::endl;
 #endif            
@@ -13,7 +13,7 @@ ChatUser::ChatUser(std::string nickname, std::string fullname, std::string passw
 Конструктор для пользователя с UID 0.
 registerUser для него не требуется.
 */
-ChatUser::ChatUser(std::string rootPassword) : _nickname("root"), _fullname("root"), _password(rootPassword),
+ChatUser::ChatUser(const std::string& rootPassword) : _nickname("root"), _fullname("root"), _password(rootPassword),
                                                 _id(0), _registered(true)
 {
 }
@@ -40,7 +40,7 @@ bool ChatUser::verifyRegistration() const
 Функция регистрации пользователя.
 Присваивает уникальный идентификатор пользователя при условии допустимости введённых значений
 */
-bool ChatUser::registerUser(USRNGRPIDTYPE id)
+bool ChatUser::registerUser(const userNGroupIdType& id)
 {
     if (verifyRegistration())
     {
@@ -86,12 +86,12 @@ std::string ChatUser::getPassword() const
     return _password;
 }
 
-bool ChatUser::checkPassword(std::string password) const
+bool ChatUser::checkPassword(const std::string& password) const
 {
     return (_password.compare(password) == 0);
 }
 
-USRNGRPIDTYPE ChatUser::getId() const
+userNGroupIdType ChatUser::getId() const
 {
     return _id;
 }

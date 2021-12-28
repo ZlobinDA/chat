@@ -2,6 +2,7 @@
 
 #include "chat_exception.h" // chat_exception, iostream, string, std
 #include <type_traits> // is_same_v
+#include <iostream>
 
 /**
 	Шаблонная функция по получению данных от пользователя.
@@ -17,14 +18,14 @@ template <typename T> T chat_getline() {
 	//	ввод будет запрашиваться пока пользователь не введет корректную информацию.
 	for (;;) {
 		try {
-			string consoleInput;
-			getline(cin, consoleInput);
+			std::string consoleInput;
+			getline(std::cin, consoleInput);
 
-			if constexpr (is_same_v<T, int>) {
+			if constexpr (std::is_same_v<T, int>) {
 				// Проверяем на наличие букв в строке
 				// Как проверять русские буквы пока не понятно, 
 				//  их использование улавливается исключением при использовании static_cast
-				for (auto i = 0; i < consoleInput.size(); ++i) {
+				for (size_t i{ 0 }; i < consoleInput.size(); ++i) {
 					if ((consoleInput.at(i) >= 'A' && consoleInput.at(i) <= 'Z') ||
 						(consoleInput.at(i) >= 'a' && consoleInput.at(i) <= 'z')) {
 						throw chat_exception("должны использоваться цифры");
@@ -32,27 +33,39 @@ template <typename T> T chat_getline() {
 				}
 				_consoleInput = static_cast <int> (stoi(consoleInput));
 			}
-			else if constexpr (is_same_v<T, string>) {
+			else if constexpr (std::is_same_v<T, size_t>) {
+				// Проверяем на наличие букв в строке
+				// Как проверять русские буквы пока не понятно, 
+				//  их использование улавливается исключением при использовании static_cast
+				for (size_t i{ 0 }; i < consoleInput.size(); ++i) {
+					if ((consoleInput.at(i) >= 'A' && consoleInput.at(i) <= 'Z') ||
+						(consoleInput.at(i) >= 'a' && consoleInput.at(i) <= 'z')) {
+						throw chat_exception("должны использоваться цифры");
+					}
+				}
+				_consoleInput = static_cast <size_t> (stoi(consoleInput));
+			}
+			else if constexpr (std::is_same_v<T, std::string>) {
 				// Проверяем на наличие русских букв в строке.
 				// Каждый символ строки должен находится в диапазоне A-Z или a-z.
-				for (auto i = 0; i < consoleInput.size(); ++i) {
+				for (size_t i{ 0 }; i < consoleInput.size(); ++i) {
 					if ( !(consoleInput.at(i) >= 'A' && consoleInput.at(i) <= 'Z') && 
 						!(consoleInput.at(i) >= 'a' && consoleInput.at(i) <= 'z')) {
 						throw chat_exception("должны использоваться английские буквы");
 					}
 				}
-				_consoleInput = static_cast <string> (consoleInput);
+				_consoleInput = static_cast <std::string> (consoleInput);
 			}
 			break;
 		}
 		catch (chat_exception& e) {
-			cout << "Введены данные неправильного формата: " << e.what() << endl;
-			cout << "Повторите ввод данных:" << endl;
+			std::cout << "Введены данные неправильного формата: " << e.what() << std::endl;
+			std::cout << "Повторите ввод данных:" << std::endl;
 			continue;
 		}
 		catch (...) {
-			cout << "Введены данные неправильного формата!" << endl;
-			cout << "Повторите ввод данных:" << endl;
+			std::cout << "Введены данные неправильного формата!" << std::endl;
+			std::cout << "Повторите ввод данных:" << std::endl;
 			continue;
 		}
 	}
@@ -67,18 +80,18 @@ template <typename T> T chat_getline() {
 	В функции реализована проверка исключений. При возникновении исключения пользователю предлагается
 	 повторить ввод информации.
 */
-string chat_getline() {
-	string consoleInput;
+std::string chat_getline() {
+	std::string consoleInput;
 	// Обработка ввода пользователя реализована в виде бесконечного цикла: 
 	//	ввод будет запрашиваться пока пользователь не введет корректную информацию.
 	for (;;) {
 		try {
-			getline(cin, consoleInput);
+			getline(std::cin, consoleInput);
 			break;
 		}
 		catch (...) {
-			cout << "Введены данные неправильного формата!" << endl;
-			cout << "Повторите ввод данных:" << endl;
+			std::cout << "Введены данные неправильного формата!" << std::endl;
+			std::cout << "Повторите ввод данных:" << std::endl;
 			continue;
 		}
 	}

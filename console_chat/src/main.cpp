@@ -1,195 +1,170 @@
+// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: http://www.viva64.com
+
 /*
-Задание
-Создайте чат со следующим функционалом:
-- консольная программа;
-- регистрация пользователей - логин, пароль, имя;
-- вход в чат по логину/паролю;
-- отправка сообщений конкретному пользователю;
-- обмен сообщениями между всеми пользователями чата одновременно.
+ Задание
+ Создайте чат со следующим функционалом:
+ - консольная программа;
+ - регистрация пользователей - логин, пароль, имя;
+ - вход в чат по логину/паролю;
+ - отправка сообщений конкретному пользователю;
+ - обмен сообщениями между всеми пользователями чата одновременно.
 
-Обязательным условием является использование классов.
-Дополнительно можно реализовать обработку исключений и использование шаблонов.
-
+ Обязательным условием является использование классов.
+ Дополнительно можно реализовать обработку исключений и использование шаблонов.
 */
 
-#include "ChatUser.h"
-#include "ChatUsersList.h"
-#include "chat_exception.h" // chat_exception, iostream, string, std
+#include "chat.h"
+#include "chat_exception.h" // chat_exception, iostream, string
 #include "chat_getline.h"
+#include <iostream>
 
 auto main()->int {
 
-	// Задаем в консоле кодировку cp1251 для корректного отображения русских букв.
+#if defined (_WIN64) || (_WIN32)
+	// ОС Windows (x32 и x64). Задаем в консоле кодировку cp1251 для корректного отображения русских букв.
 	setlocale(LC_ALL, "");
+#endif
 
-	cout << endl;
-	cout << "Добро пожаловать в локальный консольный чат!" << endl;
-
-	// Максимальное число пользователей в базе данных. Если больше, отказ от регистрации.
-	// Число может быть любым, для проверки достижения границы задано маленькое число.
-	constexpr int maxUsers = 3;
-
-	// Пароль администратора
-	string rootPassword = "123";
-
-	// userList - база данных пользователей.
-	ChatUsersList* userList = new ChatUsersList(rootPassword);
-	userList->loadFromFile();
+	std::cout << std::endl;
+	std::cout << "Добро пожаловать в локальный консольный чат!" << std::endl;
+	Chat consoleChat;
 
 	// Признак наличия пользователя в чате.
+	static std::string currentUser;
 	static bool userOnline = false;
 
 	// Работа чата организована в виде бесконечного цикла.
-	userNGroupIdType currentUserID = userWrongId; // Идентификатор текущего активного пользователя в чате
-
 	for (;;) {
-		cout << endl;
-		cout << "Выберите действие:" << endl;
-		cout << "\t 1. Я новый пользователь. Хочу зарегистрироваться" << endl;
-		cout << "\t 2. Я зарегистрированный пользователь. Войти в чат" << endl;
-		cout << "\t 3. Завершить работу приложения" << endl;
+		std::cout << std::endl;
+		std::cout << "Выберите действие:" << std::endl;
+		std::cout << "\t 1. Я новый пользователь. Хочу зарегистрироваться" << std::endl;
+		std::cout << "\t 2. Я зарегистрированный пользователь. Войти в чат" << std::endl;
+		std::cout << "\t 3. Завершить работу приложения" << std::endl;
 		// Возможность писать сообщение в чат появляется при наличии 1-ого зарегистрированного пользователя в чате.
 		if (userOnline) {
-			cout << "\t 4. Написать сообщение в общий чат" << endl;
+			std::cout << "\t 4. Написать сообщение в общий чат" << std::endl;
 		}
-
-		// Возможность написать личное сообщение доступна при наличии более 2-х зарегистрированных пользователей в чате.
-		if (userOnline && userList->getUsersCount() >= 2) {
-			cout << "\t 5. Написать личное сообщение пользователю" << endl;
+		// Возможность написать личное сообщение доступна при наличии:
+		//	- одного пользователя онлайн;
+		//	- более 2-х зарегистрированных пользователей в чате (один пользователь - администратор).
+		if (userOnline && consoleChat.getUsersCount() > 2) {
+			std::cout << "\t 5. Написать личное сообщение пользователю" << std::endl;
 		}
 		// Выводим список пользователей, зарегистрированных в чате.
-		if (userList->getUsersCount() >= 1) {
-
-			string Users = "Пользователи, зарегистрированные в чате:";
-			for (auto i = 1; i <= userList->getUsersCount(); ++i) {
-				Users = Users + " " + userList->getNickname(i);
+		// Данные о наличии администратора не выводим.
+		if (consoleChat.getUsersCount() > 1) {
+			std::string Users = "Пользователи, зарегистрированные в чате:";
+			std::vector <std::string> logins = consoleChat.getUsersList();
+			// Данные о наличии администратора не выводим.
+			for (size_t i = 0; i < logins.size(); ++i) {
+				Users = Users + " " + logins[i];
 			}
-			cout << Users << endl;
+			std::cout << Users << std::endl;
 		}
 		else {
-			cout << "В чате еще никто не зарегистрировался" << endl;
+			std::cout << "В чате еще никто не зарегистрировался" << std::endl;
 		}
 
 		int consoleInput = chat_getline<int>();
 		switch (consoleInput) {
-		case 1:
+		case 1: // Регистрация нового пользователя.
 		{
-			// Порядковый номер регистрируемого пользователя.
-			// Использую отдельную переменную, что не путаться с userOnline
-			// pam: заменил static int number на userList->getUsersCount()
-			if (userList->getUsersCount() >= maxUsers) {
-				cout << "Вы не можете зарегистрироваться! Пользовательская база данных переполнена" << endl;
+			if (consoleChat.getUsersCount() >= maxUsers) {
+				std::cout << "Вы не можете зарегистрироваться! Пользовательская база данных переполнена" << std::endl;
 				break;
 			}
 
-			cout << "При вводе личной информации используйте буквы английского алфавита и цифры. " <<
-				"Буквы русского алфавита и дополнительные символы запрещены!" << endl;
-			cout << "Введите свое имя:" << endl;
-			string name = chat_getline<string>();
+			std::cout << "При вводе личной информации используйте буквы английского алфавита и цифры. " <<
+				"Буквы русского алфавита и дополнительные символы запрещены!" << std::endl;
+			std::cout << "Введите свое имя:" << std::endl;
+			std::string name = chat_getline<std::string>();
 
-			cout << "Придумайте логин:" << endl;
-			string login = chat_getline();
-			// @todo Логин должен быть уникальным. Если логин уже существует, повторный запрос логина.
-			// pam: FIXED
-			if (userList->findUserByNickname(login) != userWrongId)
-			{
-				cout << "Вы не можете зарегистрироваться! Пользователь [" << login << "] уже зарегистрирован" << endl;
+			std::cout << "Придумайте логин:" << std::endl;
+			std::string login = chat_getline();
+			// Логин должен быть уникальным. Если логин уже существует, повторный запрос логина.
+			if (consoleChat.findLogin(login)) {
+				std::cout << "Вы не можете зарегистрироваться! Пользователь [" << login << "] уже зарегистрирован" << std::endl;
 				break;
 			}
 
-			cout << "Введите свой пароль:" << endl;
-			string password = chat_getline();
+			std::cout << "Введите свой пароль:" << std::endl;
+			std::string password = chat_getline();
 
-			// Создаем нового пользователя. Данные вводятся в формате: логин - полное имя - пароль.
-			ChatUser* newUser = new ChatUser(login, name, password);
-			// 
-			if (!newUser->registerUser(userList->getUsersCount() + 1))
-			{
-				// сюда попадём, если verifyRegistration() не удалась. Пока она проверяет только login=root
-				cout << "Вы не можете зарегистрироваться! Прочтите правила пользования чатом" << endl;
-				break;
-			}
-
-			// Добавляем нового пользователя в базу данных. Подсчет числа пользователя производится через метод getUsersCount.
-			userList->addUser(newUser);
+			// Добавляем нового пользователя в базу пользователей чата.
+			consoleChat.addUser(login, password, name);
 
 			break;
 		}
-		case 2:
+		case 2: // Вход в чат.
 		{
-			if (userList->getUsersCount() < 1) { // root'у пока входить для написания сообщений нельзя
-				cout << "В чате еще нет зарегистрированных пользователей!" << endl;
+			// Администратор не может входить в чат и писать сообщения.
+			if (consoleChat.getUsersCount() < 1) {
+				std::cout << "В чате еще нет зарегистрированных пользователей!" << std::endl;
 				break;
 			}
 
-			cout << "Введите свой логин:" << endl;
-			string login = chat_getline();;
+			std::cout << "Введите свой логин:" << std::endl;
+			std::string login = chat_getline();;
 
 			// Проверка наличия данного логина в базе.
-			userNGroupIdType number = userList->findUserByNickname(login);
-
-			// Проверили всю базу и не нашли пользователя в базе.
-			if (number == userWrongId) {
-				cout << "Пользователь с данным логином не зарегистрирован!" << endl;
+			if (!consoleChat.findLogin(login)) {
+				std::cout << "Пользователь с данным логином не зарегистрирован!" << std::endl;
 				break;
 			}
 
-			cout << "Введите свой пароль:" << endl;
-			string password = chat_getline();;
+			std::cout << "Введите свой пароль:" << std::endl;
+			std::string password = chat_getline();;
 
 			// Проверка соответствия пароля в базе и введенного пароля.
-			if (userList->checkPassword(number, password)) {
-				cout << "Добро пожаловать, " << userList->getFullname(number) << "!" << endl;
-				currentUserID = number;
+			if (consoleChat.checkPassword(login, password)) {
+				std::cout << "Добро пожаловать, " << consoleChat.getName(login) << "!" << std::endl;
+				currentUser = std::move(login);
 				userOnline = true;
 			}
 			else {
-				cout << "Пароль введен не верно!" << endl;
+				std::cout << "Пароль введен не верно!" << std::endl;
 			}
 			break;
 		}
-		case 3:
+		case 3: // Завершение работы приложения.
 		{
-			cout << "Введите пароль администратора:" << endl;
-			string password = chat_getline();
+			std::cout << "Введите пароль администратора:" << std::endl;
+			std::string password = chat_getline();
 
-			if (userList->checkPassword(0, password))
-			{
-				cout << "Работа чата завершена" << endl;
-				userList->saveToFile();
+			if (consoleChat.checkPassword("root", password)) {
+				std::cout << "Работа чата завершена" << std::endl;
 				return 0;
 			}
 			else {
-				cout << "Неправильный пароль!" << endl;
+				std::cout << "Неправильный пароль!" << std::endl;
 				break;
 			}
 		}
-		case 4:
+		case 4: // Написать в общий чат.
 		{
-			cout << "Наберите текст сообщения. Для отправки нажмите клавишу Enter" << endl;
-			string message = chat_getline();;
-			cout << "[" << userList->getNickname(currentUserID) << "]: " << message << endl;
+			std::cout << "Наберите текст сообщения. Для отправки нажмите клавишу Enter" << std::endl;
+			std::string message = chat_getline();;
+			std::cout << "[" << currentUser << "]: " << message << std::endl;
 		}
 		break;
-		case 5:
+		case 5: // Напичать личное сообщение.
 		{
-			cout << "Выберите пользователя, которому хотите написать личное сообщение" << endl;
-			for (auto i = 1; i <= userList->getUsersCount(); ++i) {
+			std::cout << "Выберите пользователя, которому хотите написать личное сообщение" << std::endl;
+			std::vector <std::string> logins = consoleChat.getUsersList();
+			for (size_t i = 0; i < logins.size(); ++i) {
 				// Пользователь не может отправлять личные сообщения себе
-				if (i != currentUserID) {
-					cout << "\t " << i << ". Написать сообщение пользователю " << userList->getNickname(i) << endl;
+				if (logins[i] != currentUser) {
+					std::cout << "\t " << i << ". Написать сообщение пользователю " << logins[i] << std::endl;
 				}
 			}
-			int number = chat_getline<int>();;
+			size_t number = chat_getline<size_t>();;
 			// Ищем введенный номер среди пользователей.
-			for (auto i{ 1 }; i <= userList->getUsersCount(); ++i) {
-				if ( (number == i) && (number != currentUserID)) {
-					cout << "Наберите текст сообщения для пользователя " << userList->getNickname(i) << ". Для отправки нажмите клавишу Enter" << endl;
-					string message = chat_getline();
-					cout << "[" << userList->getNickname(i) << "] у вас личное сообщение от пользователя " <<
-						"[" << userList->getNickname(currentUserID) << "]: " << message << endl;
-				}
-			}
+
+			std::cout << "Наберите текст сообщения для пользователя " << logins.at(number) << ". Для отправки нажмите клавишу Enter" << std::endl;
+			std::string message = chat_getline();
+			std::cout << "[" << logins.at(number) << "] у вас личное сообщение от пользователя " <<
+				"[" << currentUser << "]: " << message << std::endl;
 			break;
 		}
 		default:

@@ -2,16 +2,15 @@
 
 #include <exception>
 #include <string>
-using namespace std;
 
 /** Пользовательский класс исключений при обработке информации, введенной пользователем с помощью консоли. */
-class chat_exception : public exception {
+class chat_exception : public std::exception {
 private:
-	string _message;
+	std::string _message;
 public:
-	chat_exception(string message) : _message(message) {}
+	chat_exception(std::string message) : _message(message) {}
 	const char* what() const noexcept override {
-		static string message = "";
+		static std::string message = "";
 		message = _message;
 		return message.c_str();
 	}

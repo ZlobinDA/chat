@@ -2,6 +2,7 @@
 Debug
 .DS_Store
 Release
+*.user
 
 # Prerequisites
 *.d

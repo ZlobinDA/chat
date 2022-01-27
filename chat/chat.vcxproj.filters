@@ -15,27 +15,42 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\chat.h">
+    <ClInclude Include="src\ChatException.h">
       <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Chat.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ChatGetline.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\DataFile.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\sha1.h">
-      <Filter>Source Files</Filter>
+      <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\chat_exception.h">
-      <Filter>Source Files</Filter>
+    <ClInclude Include="src\Message.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\chat_getline.h">
-      <Filter>Source Files</Filter>
+    <ClInclude Include="src\User.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\main.cpp">
+    <ClCompile Include="src\Main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\chat.cpp">
+    <ClCompile Include="src\Chat.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\sha1.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Message.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\User.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

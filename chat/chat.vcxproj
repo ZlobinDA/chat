@@ -19,15 +19,20 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\chat.h" />
-    <ClInclude Include="src\chat_exception.h" />
-    <ClInclude Include="src\chat_getline.h" />
+    <ClInclude Include="src\Chat.h" />
+    <ClInclude Include="src\ChatException.h" />
+    <ClInclude Include="src\ChatGetline.h" />
+    <ClInclude Include="src\DataFile.h" />
+    <ClInclude Include="src\Message.h" />
     <ClInclude Include="src\sha1.h" />
+    <ClInclude Include="src\User.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\chat.cpp" />
-    <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\Chat.cpp" />
+    <ClCompile Include="src\Main.cpp" />
+    <ClCompile Include="src\Message.cpp" />
     <ClCompile Include="src\sha1.cpp" />
+    <ClCompile Include="src\User.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
@@ -35,6 +40,7 @@
     <ProjectGuid>{42393c81-81eb-4b1a-8394-cceff5544ad7}</ProjectGuid>
     <RootNamespace>consolechat</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>chat</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">

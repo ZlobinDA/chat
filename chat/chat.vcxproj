@@ -24,14 +24,12 @@
     <ClInclude Include="src\ChatGetline.h" />
     <ClInclude Include="src\DataFile.h" />
     <ClInclude Include="src\Message.h" />
-    <ClInclude Include="src\sha1.h" />
     <ClInclude Include="src\User.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Chat.cpp" />
     <ClCompile Include="src\Main.cpp" />
     <ClCompile Include="src\Message.cpp" />
-    <ClCompile Include="src\sha1.cpp" />
     <ClCompile Include="src\User.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

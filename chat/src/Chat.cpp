@@ -16,9 +16,12 @@
 #endif
 
 
-Chat::Chat() : _userOnline(false) {
+Chat::Chat() : _userOnline(false), _socketDescriptor(0), _port(0), _connection(0), _isServer(false) {
 	std::cout << "Вызван конструктор чата" << std::endl;
-	printConfig();
+	//
+	showConfig();
+	//
+	netConfig();
 	// Считываем базу сообщений чата.
 	_messageDataBaseFile = new DataFile <std::vector <Message>>(&_messageDataBase, "messageData");
 	// Считываем базу пользователей чата.
@@ -27,9 +30,9 @@ Chat::Chat() : _userOnline(false) {
 	if (_userDataBase.size() > 0) {
 		// Нашли пользовательскую базу данных. Считываем данные из базы.
 		bool _readUserDB = true;	/** флаг чтения данных их базы данных. */
-		for (auto i{ 0 }; i < _userDataBase.size(); ++i) {
-			User user = _userDataBase.at(i);
-			add(user.getName(), user.getLogin(), user.getFPassword(), _readUserDB);
+		for (size_t i{ 0 }; i < _userDataBase.size(); ++i) {
+			User user = _userDataBase[i];
+			add(user.getName(), user.getLogin(), user.getPassword(), _readUserDB);
 		}
 	}
 	else {
@@ -39,7 +42,11 @@ Chat::Chat() : _userOnline(false) {
 }
 
 Chat::~Chat() {
+	std::cout << "Закрываем сокет, завершаем соединение" << std::endl;
+	close(_socketDescriptor);
+	//
 	delete _userDataBaseFile;
+	//
 	delete _messageDataBaseFile;
 }
 
@@ -57,6 +64,7 @@ int Chat::run() {
 		if (_userOnline) {
 			std::cout << "\t 4. Написать сообщение в общий чат" << std::endl;
 			std::cout << "\t 5. Написать личное сообщение пользователю" << std::endl;
+			std::cout << "\t 6. Проверить почту" << std::endl;
 		}
 		// Выводим список пользователей, зарегистрированных в чате. Данные о наличии администратора не выводим.
 		if (getUsersCount() > 1) {
@@ -89,6 +97,9 @@ int Chat::run() {
 			// Напичать личное сообщение.
 			writePrivate();
 			break;
+		case checkMailState:
+			checkMail();
+			break;
 		case terminateState:
 			// Завершение работы приложения.
 			if (terminate()) return 1;
@@ -100,6 +111,40 @@ int Chat::run() {
 }
 
 
+void Chat::getNetMessage() {
+	char c_message[netMessageLen];
+	bzero(c_message, sizeof(c_message));
+	// Читаем сообщение из сокета.
+	if (_isServer) {
+		// Приложения является сервером.
+		read(_connection, c_message, sizeof(c_message));
+	}
+	else {
+		// Приложение является клиентом.
+		read(_socketDescriptor, c_message, sizeof(c_message));
+	}
+	// Выводим сообщение в консоль.
+	//  Внимание! Использую string исключительно ради удобства отладки
+	std::string message = c_message;
+	std::cout << message << std::endl;
+}
+
+void Chat::sendNetMessage(const std::string& message) {
+	// Отправляем сообщение в сокет.
+	ssize_t bytes = 0;
+	if (_isServer) {
+		// Приложения является сервером.
+		bytes = write(_connection, message.c_str(), netMessageLen);
+	}
+	else {
+		// Приложение является клиентом.
+		bytes = write(_socketDescriptor, message.c_str(), netMessageLen);
+	}
+	if (bytes >= 0) {
+		std::cout << "Сообщение успешно отправлено" << std::endl;
+	}
+}
+
 void Chat::setMessage(const std::string& from, const std::string& to, const std::string& message) {
 	Message newMessage;
 	newMessage.setSender(from);
@@ -110,7 +155,7 @@ void Chat::setMessage(const std::string& from, const std::string& to, const std:
 }
 
 
-void Chat::printConfig() {
+void Chat::showConfig() {
 	// ОС Windows
 #if defined (_WIN32) || defined (_WIN64)
 
@@ -181,10 +226,16 @@ void Chat::enter() {
 
 
 void Chat::writePublic() {
+	// Запрашиваем сообщение у пользователя.
 	std::cout << "Наберите текст сообщения. Для отправки нажмите клавишу Enter" << std::endl;
 	std::string message = chatGetline();
+	// Сохраеняем сообщение в БД.
 	setMessage(_currentUser, "all", message);
-	std::cout << "[" << _currentUser << "]: " << message << std::endl;
+	// Выводим в консоль.
+	message = "[" + _currentUser + "] написал всем: " + message;
+	std::cout << message << std::endl;
+	// Отправляем сообщение в сокет.
+	sendNetMessage(message);
 }
 
 
@@ -199,9 +250,18 @@ void Chat::writePrivate() {
 	std::string receiver = logins.at(number);
 	std::cout << "Наберите текст сообщения для пользователя " << receiver << ". Для отправки нажмите клавишу Enter" << std::endl;
 	std::string message = chatGetline();
+	// Сохраняем сообщение в БД.
 	setMessage(_currentUser, receiver, message);
+	// Выводим сообщение в консоль.
 	std::cout << "[" << receiver << "] у вас личное сообщение от пользователя " <<
 		"[" << _currentUser << "]: " << message << std::endl;
+	// Отправляем сообщение в сокет.
+	message = "[" + _currentUser + "] отправил сообщение " + "[" + receiver + "]: " + message;
+	sendNetMessage(message);
+}
+
+void Chat::checkMail() {
+	getNetMessage();
 }
 
 
@@ -225,7 +285,6 @@ void Chat::add(const std::string& name, const std::string& login, const std::str
 		", пароль - " << password << std::endl;
 	// Создаем нового пользователя.
 	User user(name, login, password);
-	printPassword(user.getPassword());
 	// Добавляем нового пользователя в базу.
 	_dataBase[login] = user;
 
@@ -239,33 +298,17 @@ void Chat::add(const std::string& name, const std::string& login, const std::str
 bool Chat::checkPassword(const std::string& login, const std::string& password) {
 	std::cout << "Выполняем вход пользователя в чат: " << "логин - " << login <<
 		", пароль - " << password << std::endl;
-	// Вычисляем хеш от присланного пароля.
-	std::cout << "Введенный пароль:" << std::endl;
-	char* c_password = new char[password.size() + 1];
-	for (size_t i = 0; i < password.size(); ++i) {
-		c_password[i] = password.at(i);
-	}
-	uint c_size = static_cast <uint> (sizeof(char) * (password.size() + 1));
-	uint* digest = sha1(c_password, c_size);
-	printPassword(digest);
 	// Извлекаем сохраненный при регистрации пароль пользователя.
 	std::cout << "Зарегистрированный пароль:" << std::endl;
 	auto search = _dataBase.find(login);
-	uint* pass = search->second.getPassword();
-	printPassword(pass);
+	std::string _password = search->second.getPassword();
 	// Сравниваем хеш с тем, что был вычислен от пароля при регистрации.
-	if (digest[0] == pass[0] &&
-		digest[1] == pass[1] &&
-		digest[2] == pass[2] &&
-		digest[3] == pass[3] &&
-		digest[4] == pass[4]) {
+	if (_password == password) {
 		std::cout << "Выполнен вход пользователя в чат" << std::endl;
-		delete[] digest;
 		return true;
 	}
 	else {
 		std::cout << "Ошибка! Неправильный пароль" << std::endl;
-		delete[] digest;
 		return false;
 	}
 }
@@ -297,9 +340,60 @@ std::vector<std::string> Chat::getUsersList() const {
 	return array;
 }
 
-void Chat::printPassword(const uint* password) {
-	for (int i = 0; i < 5; i++) {
-		std::cout << std::hex << std::setw(8) << std::setfill('0') << password[i] << " ";
+void Chat::netConfig() {
+	// Создаем сокет для обмена сообщениями по сети с помощью протокола TCP.
+	_socketDescriptor = socket(AF_INET, SOCK_STREAM, 0);
+	if (_socketDescriptor == -1) {
+		std::cout << "Ошибка при создании сокета!" << std::endl;
+		// Чат продолжит свою работу локально.
+		return;
 	}
-	std::cout << std::endl;
+	// По умолчанию запускается клиентская версия приложения и 
+	//  пытается установить соединение с приложением-сервером.
+	// Заполняем струкруту с параметрами связи с сервером.
+	_port = 49999;
+	_IP = "127.0.0.1";
+	sockaddr_in _socketAddress;
+	_socketAddress.sin_addr.s_addr = inet_addr(_IP.c_str());;
+	_socketAddress.sin_port = htons(_port);
+	_socketAddress.sin_family = AF_INET;
+	// Пытаемся установить связь с сервером.
+	int status = connect(_socketDescriptor, (sockaddr *)& _socketAddress, sizeof(_socketAddress));
+	if (status == -1) {
+		std::cout << "Сервер не найден! Приложение будет настроено как сервер" << std::endl;
+		_isServer = true;
+		// Настраиваем приложение как сервер,
+		//  принимающий запросы с любых IP.
+		_socketAddress.sin_addr.s_addr = htonl(INADDR_ANY);
+		// Привязываем сокет сервера к IP-адресу и номеру порта.
+		status = bind(_socketDescriptor, (struct sockaddr*)&_socketAddress, sizeof(_socketAddress));
+		if (status == -1) {
+			std::cout << "Ошибка при привязке сокета!" << std::endl;
+			// Чат продолжит свою работу локально.
+			return;
+		}
+		// Переводим сокет в режим ожидания. Глубина очереди - 5 соединений.
+		status = listen(_socketDescriptor, 5);
+		if (status == -1) {
+			std::cout << "Ошибка при переводе сокета в режим ожидания!" << std::endl;
+			// Чат продолжит свою работу локально.
+			return;
+		}
+		else {
+			std::cout << "Сокет переведен в режим ожидания" << std::endl;
+		}
+		sockaddr_in client;
+		socklen_t lenght = sizeof(client);
+		std::cout << "Ждем первого клиента..." << std::endl;
+		_connection = accept(_socketDescriptor, (sockaddr*)&client, &lenght);
+		if (_connection == -1) {
+			std::cout << "Ошибка! Сервер не может получать сообщения" << std::endl;
+			// Чат продолжит свою работу локально.
+			return;
+		}
+		std::cout << "Первый клиент подключен" << std::endl;
+	}
+	else {
+		std::cout << "Установлено соединение с сервером" << std::endl;
+	}
 }

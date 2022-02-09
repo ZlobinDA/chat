@@ -27,9 +27,6 @@
     <ClInclude Include="src\DataFile.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\sha1.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\Message.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -42,9 +39,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\Chat.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\sha1.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\Message.cpp">

@@ -1,7 +1,7 @@
 #pragma once
 
-#include "sha1.h"
 #include <fstream>
+#include <cstring>
 #include <string>
 
 /**
@@ -9,30 +9,25 @@
 */
 class User final {
 private:
-	std::string _name;	/** имя пользователя */
-	std::string _login;	/** логин пользователя */
-	std::string _fpassword; /** Тест! Сохранение данных о пользователе в файл. */
-	uint* _password;	/** пароль пользователя */
-	bool _isOnline;		/** статус пользователя: true - online, false - offline */
+	std::string _name;		/** имя пользователя */
+	std::string _login;		/** логин пользователя */
+	std::string _password;	/** пароль пользователя */
+	bool _isOnline;			/** статус пользователя: true - online, false - offline */
 public:
 	User();
 	User(const User& other);
 	User(const std::string& name, const std::string& login, const std::string& password);
-	~User();
+	~User() = default;
 
 	User& operator = (const User& other);
 
 	void setName(const std::string& name);
 	void setLogin(const std::string& login);
-	void setFPassword(const std::string& fpassword);
-	void setPassword();
+	void setPassword(const std::string& password);
 
 	std::string getName() const;
 	std::string getLogin() const;
-	std::string getFPassword() const;
-	uint* getPassword() const;
+	std::string getPassword() const;
 
 	bool getStatus() const;
-
-	friend std::ostream& operator << (std::ostream& output, const User& object);
 };

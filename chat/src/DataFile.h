@@ -6,6 +6,7 @@
 #include <fstream>
 #include <iostream>
 #include <string>
+#include <vector>
 
 namespace fs = std::filesystem;
 
@@ -43,11 +44,11 @@ public:
 					user.setLogin(_line);
 					// Считываем пароль
 					getline(_file, _line);
-					user.setFPassword(_line);
-					user.setPassword();
+					user.setPassword(_line);
+
 					_object->emplace_back(user);
 					std::cout << "Имя - " << user.getName() << ", логин - " <<
-						user.getLogin() << ", пароль - " << user.getFPassword() << std::endl;
+						user.getLogin() << ", пароль - " << user.getPassword() << std::endl;
 				}
 			}
 			else if constexpr (std::is_same_v<std::vector<Message>, T>) {
@@ -67,6 +68,7 @@ public:
 					// Считываем получателя
 					getline(_file, _line);
 					message.setReceiver(_line);
+
  					_object->emplace_back(message);
 					std::cout << "[" << message.getSender() << "] написал для " << 
 						message.getReceiver() << " : " << message.getText() << std::endl;
@@ -100,7 +102,7 @@ public:
 				// Записываем логин
 				_file << currentObject.getLogin() << std::endl;
 				// Записываем пароль
-				_file << currentObject.getFPassword() << std::endl;
+				_file << currentObject.getPassword() << std::endl;
 			}
 			else if constexpr (std::is_same_v< std::vector<Message>, T>) {
 				Message currentObject = _object->back();

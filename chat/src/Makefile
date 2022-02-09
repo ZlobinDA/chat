@@ -6,7 +6,7 @@ CC=g++
 # -std=c++17 - использовать стандарт с++17
 CFLAGS=-g -Wall -std=c++17
 # Исходные тексты
-SOURCES=chat.cpp main.cpp sha1.cpp
+SOURCES=Chat.cpp Main.cpp Message.cpp User.cpp
 # Объектные файлы. Получаем из исходников заменой .cpp на .o
 OBJECTS=$(SOURCES:.cpp=.o)
 # Имя исполняемого модуля

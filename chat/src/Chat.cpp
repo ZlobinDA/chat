@@ -3,48 +3,35 @@
 
 #include "Chat.h"
 #include "ChatGetline.h"
-#include <iomanip>
+//#include <iomanip>
 #include <iostream>
 #include <cstring>
 #if defined (__linux__)
 #include <sys/utsname.h>
 #endif
 
-
-Chat::Chat() : _log("Chat"), _userOnline(false),
-	_socketDescriptor(0), _port(0), _connection(0), _isServer(false) {
+Chat::Chat(const std::string& rootLogin, const std::string& rootPassword,
+	const std::string& net_IP, const uint16_t net_port,
+	const std::string& dataBase_host, const std::string& dataBase_user, const std::string& dataBase_password, const std::string& dataBase_name) : 
+	_userOnline(false),
+	_rootLogin(rootLogin), _rootPassword(rootPassword),
+	_net_IP(net_IP), _net_port(net_port),
+	_dataBase_host(dataBase_host), _dataBase_user(dataBase_user), _dataBase_password(dataBase_password), _dataBase_name(dataBase_name),
+	_log("Chat") {
 	std::string logMessage = "Вызван конструктор";
 	_log.write(logMessage);
-	// Печатаем в консоль информации о операционной системы, в которой запущен чат.
-	showConfig();
-	// Настраиваем сеть.
-	netConfig();
+	// Печатаем в консоль информации об операционной системе, в которой запущен чат.
+	show_config();
 	// Подключаемся к базе данных.
-	logMessage = "Подключаемся к базе данных";
-	_log.write(logMessage);
-	std::string host = "localhost";
-	std::string user = "root";
-	std::string password = "123456";
-	std::string name = "chatdb";
-	_dataBase.connect(host, user, password, name);
-	// Для пустой базы данных добавляем администратора.
-	if (!_dataBase.find_user("root")) {
-		logMessage = "Добавляем пользователя с правами администратора";
-		_log.write(logMessage);
-		_dataBase.add_user("root", "root", "123");
-	}
+	connect_db();
+	// Подключаемся к серверу.
+	connect_net();
 }
 
 Chat::~Chat() {
 	std::string logMessage = "Вызван деструктор";
 	_log.write(logMessage);
-#ifdef __linux__
-	logMessage = "Закрываем сокет, завершаем соединение";
-	_log.write(logMessage);
-	close(_socketDescriptor);
-#endif
 }
-
 
 int Chat::run() {
 	std::cout << std::endl;
@@ -105,48 +92,7 @@ int Chat::run() {
 	}
 }
 
-
-void Chat::getNetMessage() {
-#ifdef __linux__
-	char c_message[netMessageLen];
-	bzero(c_message, sizeof(c_message));
-	// Читаем сообщение из сокета.
-	if (_isServer) {
-		// Приложения является сервером.
-		read(_connection, c_message, sizeof(c_message));
-	}
-	else {
-		// Приложение является клиентом.
-		read(_socketDescriptor, c_message, sizeof(c_message));
-	}
-	// Выводим сообщение в консоль.
-	//  Внимание! Использую string исключительно ради удобства отладки
-	std::string message = c_message;
-	std::cout << message << std::endl;
-#endif
-}
-
-void Chat::sendNetMessage(const std::string& message) {
-#ifdef __linux__
-	// Отправляем сообщение в сокет.
-	ssize_t bytes = 0;
-	if (_isServer) {
-		// Приложения является сервером.
-		bytes = write(_connection, message.c_str(), netMessageLen);
-	}
-	else {
-		// Приложение является клиентом.
-		bytes = write(_socketDescriptor, message.c_str(), netMessageLen);
-	}
-	if (bytes >= 0) {
-		logMessage = "Сообщение успешно отправлено";
-		_log.write(logMessage);
-	}
-#endif
-
-}
-
-void Chat::showConfig() {
+void Chat::show_config() {
 	std::string logMessage;
 	// ОС Windows
 #if defined (_WIN32) || defined (_WIN64)
@@ -157,15 +103,17 @@ void Chat::showConfig() {
 #if defined(__linux__)
 	struct utsname _utsname;
 	uname(&_utsname);
-	logMessage = "OS name: " + _utsname.sysname;
+	std::string property = _utsname.sysname;
+	logMessage = "OS name: " + property;
 	_log.write(logMessage);
-	logMessage = "OS release: " + _utsname.release;
+	property = _utsname.release;
+	logMessage = "OS release: " + property;
 	_log.write(logMessage);
-	logMessage = "OS version: " + _utsname.version;
+	property = _utsname.version;
+	logMessage = "OS version: " + property;
 	_log.write(logMessage);
 #endif
 }
-
 
 void Chat::registration() {
 	std::cout << "При вводе личной информации используйте буквы английского алфавита и цифры. "
@@ -189,7 +137,6 @@ void Chat::registration() {
 	// Добавляем нового пользователя в базу пользователей чата.
 	_dataBase.add_user(name, login, password);
 }
-
 
 void Chat::enter() {
 	// Администратор не может входить в чат и писать сообщения.
@@ -217,7 +164,6 @@ void Chat::enter() {
 	}
 }
 
-
 void Chat::writePublic() {
 	// Запрашиваем сообщение у пользователя.
 	std::cout << "Наберите текст сообщения. Для отправки нажмите клавишу Enter" << std::endl;
@@ -228,9 +174,8 @@ void Chat::writePublic() {
 	message = "[" + _currentUser + "] написал всем: " + message;
 	std::cout << message << std::endl;
 	// Отправляем сообщение в сокет.
-	sendNetMessage(message);
+	_net.sendMessage(message);
 }
-
 
 void Chat::writePrivate() {
 	std::cout << "Выберите пользователя, которому хотите написать личное сообщение" << std::endl;
@@ -250,11 +195,16 @@ void Chat::writePrivate() {
 		"[" << _currentUser << "]: " << message << std::endl;
 	// Отправляем сообщение в сокет.
 	message = "[" + _currentUser + "] отправил сообщение " + "[" + receiver + "]: " + message;
-	sendNetMessage(message);
+	_net.sendMessage(message);
 }
 
 void Chat::checkMail() {
-	getNetMessage(); 
+	std::string logMessage = "Проверяем почту";
+	_log.write(logMessage);
+	// Считываем сообщение из сокета
+	std::string message = _net.getMessage();
+	// Выводим сообщение в консоль
+	std::cout << message << std::endl;
 }
 
 
@@ -272,71 +222,43 @@ bool Chat::terminate() {
 	}
 }
 
-void Chat::netConfig() {
-#ifdef __linux__
-	// Создаем сокет для обмена сообщениями по сети с помощью протокола TCP.
-	_socketDescriptor = socket(AF_INET, SOCK_STREAM, 0);
-	if (_socketDescriptor == -1) {
-		logMessage = "Ошибка при создании сокета!";
+void Chat::connect_net() {
+	std::string logMessage = "Подключаемся к cерверу";
+	_log.write(logMessage);
+	_net.config(_net_IP, _net_port);
+}
+
+void Chat::connect_db() {
+	std::string logMessage = "Подключаемся к базе данных";
+	_log.write(logMessage);
+	_dataBase.connect(_dataBase_host, _dataBase_user, _dataBase_password, _dataBase_name);
+	// В пустой базе данных отсутствует пользователь с правами администратора.
+	// Для пустой базы данных добавляем администратора.
+	if (!_dataBase.find_user("root")) {
+		logMessage = "Добавляем пользователя с правами администратора";
 		_log.write(logMessage);
-		// Чат продолжит свою работу локально.
-		return;
+		_dataBase.add_user(_rootLogin, _rootLogin, _rootPassword);
 	}
-	// По умолчанию запускается клиентская версия приложения и 
-	//  пытается установить соединение с приложением-сервером.
-	// Заполняем струкруту с параметрами связи с сервером.
-	_port = 49999;
-	_IP = "127.0.0.1";
-	sockaddr_in _socketAddress;
-	_socketAddress.sin_addr.s_addr = inet_addr(_IP.c_str());;
-	_socketAddress.sin_port = htons(_port);
-	_socketAddress.sin_family = AF_INET;
-	// Пытаемся установить связь с сервером.
-	int status = connect(_socketDescriptor, (sockaddr*)&_socketAddress, sizeof(_socketAddress));
-	if (status == -1) {
-		logMessage = "Сервер не найден! Приложение будет настроено как сервер";
-		_log.write(logMessage);
-		_isServer = true;
-		// Настраиваем приложение как сервер,
-		//  принимающий запросы с любых IP.
-		_socketAddress.sin_addr.s_addr = htonl(INADDR_ANY);
-		// Привязываем сокет сервера к IP-адресу и номеру порта.
-		status = bind(_socketDescriptor, (struct sockaddr*)&_socketAddress, sizeof(_socketAddress));
-		if (status == -1) {
-			logMessage = "Ошибка при привязке сокета!";
-			_log.write(logMessage);
-			// Чат продолжит свою работу локально.
-			return;
-		}
-		// Переводим сокет в режим ожидания. Глубина очереди - 5 соединений.
-		status = listen(_socketDescriptor, 5);
-		if (status == -1) {
-			logMessage = "Ошибка при переводе сокета в режим ожидания!";
-			_log.write(logMessage);
-			// Чат продолжит свою работу локально.
-			return;
+	logMessage = "Считываем историю сообщений из базы данных";
+	_log.write(logMessage);
+	// Собщения из БД передаются в виде массива, каждая строка которого
+	//  имеет следующий формат:
+	// 1 элемент: имя отправителя;
+	// 2 элемент: имя получателя;
+	// 3 элемент: текст сообщения.
+	std::vector <std::vector<std::string>> messages = _dataBase.get_messages();
+	for (size_t i = 0; i < messages.size(); ++i) {
+		std::string consoleMessage;
+		std::string sender = (messages[i])[0];
+		std::string receiver = (messages[i])[1];
+		std::string message = (messages[i])[2];
+		if (receiver == "all") {
+			consoleMessage = "[" + sender + "] написал всем: " + message;
 		}
 		else {
-			logMessage = "Сокет переведен в режим ожидания";
-			_log.write(logMessage);
+			consoleMessage = "[" + receiver + "] у вас личное сообщение от пользователя " +
+				"[" + sender + "]: " + message;
 		}
-		sockaddr_in client;
-		socklen_t lenght = sizeof(client);
-		logMessage = "Ждем первого клиента...";
-		_log.write(logMessage);
-		_connection = accept(_socketDescriptor, (sockaddr*)&client, &lenght);
-		if (_connection == -1) {
-			logMessage = "Ошибка! Сервер не может получать сообщения";
-			_log.write(logMessage);
-			// Чат продолжит свою работу локально.
-			return;
-		}
-		logMessage = "Первый клиент подключен";
-		_log.write(logMessage);
+		std::cout << consoleMessage << std::endl;
 	}
-	else {
-		logMessage = "Установлено соединение с сервером";
-		_log.write(logMessage);
-	}
-#endif
 }

@@ -78,27 +78,24 @@
     <ClInclude Include="..\chat\src\Chat.h" />
     <ClInclude Include="..\chat\src\ChatException.h" />
     <ClInclude Include="..\chat\src\ChatGetline.h" />
-    <ClInclude Include="..\chat\src\DataFile.h" />
-    <ClInclude Include="..\chat\src\Message.h" />
-    <ClInclude Include="..\chat\src\User.h" />
+    <ClInclude Include="src\DataBase.h" />
+    <ClInclude Include="src\Logger.h" />
+    <ClInclude Include="src\Net.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\chat\src\Chat.cpp" />
     <ClCompile Include="..\chat\src\Main.cpp" />
-    <ClCompile Include="..\chat\src\Message.cpp" />
-    <ClCompile Include="..\chat\src\User.cpp" />
+    <ClCompile Include="src\DataBase.cpp" />
+    <ClCompile Include="src\Logger.cpp" />
+    <ClCompile Include="src\Net.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="src\Makefile" />
   </ItemGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <CppLanguageStandard>c++17</CppLanguageStandard>
-      <AdditionalIncludeDirectories>C:\Program Files\MySQL\MySQL Server 8.0\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <AdditionalOptions>$(mysql_config --cflags) %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
-    <Link>
-      <AdditionalLibraryDirectories>C:\Program Files\MySQL\MySQL Server 8.0\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <LibraryDependencies>
-      </LibraryDependencies>
-    </Link>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />

@@ -2,16 +2,10 @@
 
 #include "DataBase.h"
 #include "Logger.h"
+#include "Net.h"
 
 #include <string>
 #include <vector>
-#include <unordered_map>
-#ifdef __linux__
-#include <unistd.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#endif // __linux__
 
 // Константы цикла по управлению работой чата
 constexpr int registrationState = 1;
@@ -21,32 +15,37 @@ constexpr int writePublicState = 4;
 constexpr int writePrivateState = 5;
 constexpr int checkMailState = 6;
 
-// Максимально допустимая длина сетевого сообщения.
-constexpr int netMessageLen = 256;
-
 class Chat final {
 private:
-	DataBase _dataBase;			/** база данных пользователей чата */
-	Logger _log;				/** журнал */
 	std::string _currentUser;	/** имя текущего пользователя, находящегося в чате */
-	bool _userOnline;			/** признак наличия пользователя в чате */
+	bool _userOnline;		/** признак наличия пользователя в чате */
+
+	/** Параметры пользователя с правами администратора. */
+	std::string _rootLogin;		/** логин администратора */
+	std::string _rootPassword;	/** пароль администратора */
 
 	/** Работа с сетью. */
-	int _socketDescriptor;	// дескриптор сокета
-	uint16_t _port;			// номер порта
-	std::string _IP;		// IP адресс
-	int _connection;		// дескриптор присоединенного сокета
-	bool _isServer;			// признак того, что приложение является сервером
-	// Настройка сети.
-	void netConfig();
-	// Получить сообщение из сокета.
-	void getNetMessage();
-	// Отправить сообщение в сокет.
-	void sendNetMessage(const std::string& message);
+	Net _net;			/** объект для работы с сетью */
+	std::string _net_IP;		/** IP сервера */
+	uint16_t _net_port;			/** номер порта сервера */
+	// Подключение к серверу.
+	void connect_net();
+
+	/** Работа с базой данной. */
+	DataBase _dataBase;		/** объект БД */
+	std::string _dataBase_host;	/** адрес БД */
+	std::string _dataBase_user;	/** пользователь БД */
+	std::string _dataBase_password;	/** пароль пользователя БД */
+	std::string _dataBase_name;	/** имя БД */
+	// Подключение к базе данных.
+	void connect_db();
+
+	/** Работа с журналом */
+	Logger _log;
+	/** Вывод в консоль названия и номера версии операционной системы, в которой запущен чат. */
+	void show_config();
 
 	/** Механика чата. */
-	/** Вывод в консоль названия и номера версии операционной системы, в которой запущен чат. */
-	void showConfig();
 	/** Регистрация нового пользователя в чате. */
 	void registration();
 	/** Вход пользователя в чат. */
@@ -61,9 +60,11 @@ private:
 	bool terminate();
 
 public:
-	Chat();
+	Chat(const std::string& rootLogin, const std::string& rootPassword,
+		const std::string& net_IP, const uint16_t net_port,
+		const std::string& dataBase_host, const std::string& dataBase_user, const std::string& dataBase_password, const std::string& dataBase_name);
 	~Chat();
-
+	
 	/** Метод для запуска чата. Работа чата организована в виде бесконечного цикла. */
 	int run();
 };

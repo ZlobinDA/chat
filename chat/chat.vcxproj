@@ -24,12 +24,14 @@
     <ClInclude Include="src\ChatGetline.h" />
     <ClInclude Include="src\DataBase.h" />
     <ClInclude Include="src\Logger.h" />
+    <ClInclude Include="src\Net.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Chat.cpp" />
     <ClCompile Include="src\DataBase.cpp" />
     <ClCompile Include="src\Logger.cpp" />
     <ClCompile Include="src\Main.cpp" />
+    <ClCompile Include="src\Net.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

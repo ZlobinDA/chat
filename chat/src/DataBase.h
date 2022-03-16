@@ -2,7 +2,11 @@
 
 #include "Logger.h"
 
+#if defined __linux__
+#include <mysql/mysql.h>
+#elif defined (_WIN32) || defined (_WIN64)
 #include <mysql.h>
+#endif
 #include <string>
 #include <vector>
 
@@ -56,6 +60,6 @@ public:
 	// Добавление сообщения в базу данных.
 	void add_message(const std::string& sender, const std::string& reciever, const std::string& message);
 	// Извлечение сообщения из базы данных.
-	std::vector <std::string> get_messages();
+	std::vector <std::vector<std::string>> get_messages();
 };
 

@@ -27,11 +27,20 @@
     <ClInclude Include="src\DataBase.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\Net.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Language.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="src\Logger.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\Net.h">
+    <ClInclude Include="src\MainLog.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\LogName.h">
+      <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -44,10 +53,16 @@
     <ClCompile Include="src\DataBase.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\Logger.cpp">
+    <ClCompile Include="src\Net.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\Net.cpp">
+    <ClCompile Include="src\Logger.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Language.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\MainLog.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

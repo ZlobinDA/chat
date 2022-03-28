@@ -3,9 +3,13 @@
 
 #include "Chat.h"
 #include "ChatGetline.h"
-//#include <iomanip>
-#include <iostream>
+#include "Logger.h"
+#include "MainLog.h"
+
 #include <cstring>
+#include <iostream>
+#include <thread>
+
 #if defined (__linux__)
 #include <sys/utsname.h>
 #endif
@@ -13,24 +17,34 @@
 Chat::Chat(const std::string& rootLogin, const std::string& rootPassword,
 	const std::string& net_IP, const uint16_t net_port,
 	const std::string& dataBase_host, const std::string& dataBase_user, const std::string& dataBase_password, const std::string& dataBase_name) : 
+	_logName("Chat"),
 	_userOnline(false),
 	_rootLogin(rootLogin), _rootPassword(rootPassword),
 	_net_IP(net_IP), _net_port(net_port),
-	_dataBase_host(dataBase_host), _dataBase_user(dataBase_user), _dataBase_password(dataBase_password), _dataBase_name(dataBase_name),
-	_log("Chat") {
+	_dataBase_host(dataBase_host), _dataBase_user(dataBase_user), _dataBase_password(dataBase_password), _dataBase_name(dataBase_name) {
 	std::string logMessage = "Вызван конструктор";
-	_log.write(logMessage);
+	mainLog << _logName.get_logName(logMessage);
 	// Печатаем в консоль информации об операционной системе, в которой запущен чат.
-	show_config();
+	std::thread thread_config(&Chat::show_config, this);
 	// Подключаемся к базе данных.
-	connect_db();
+	std::thread thread_db(&Chat::connect_db, this);
 	// Подключаемся к серверу.
-	connect_net();
+	std::thread thread_net(&Chat::connect_net, this);
+
+	if (thread_config.joinable()) {
+		thread_config.join();
+	}
+	if (thread_db.joinable()) {
+		thread_db.join();
+	}
+	if (thread_net.joinable()) {
+		thread_net.join();
+	}
 }
 
 Chat::~Chat() {
 	std::string logMessage = "Вызван деструктор";
-	_log.write(logMessage);
+	mainLog << _logName.get_logName(logMessage);
 }
 
 int Chat::run() {
@@ -97,7 +111,7 @@ void Chat::show_config() {
 	// ОС Windows
 #if defined (_WIN32) || defined (_WIN64)
 	logMessage = "OS name: Windows";
-	_log.write(logMessage);
+	mainLog << _logName.get_logName(logMessage);
 #endif
 	// ОС Linux
 #if defined(__linux__)
@@ -105,13 +119,13 @@ void Chat::show_config() {
 	uname(&_utsname);
 	std::string property = _utsname.sysname;
 	logMessage = "OS name: " + property;
-	_log.write(logMessage);
+	mainLog << _logName.get_logName(logMessage);
 	property = _utsname.release;
 	logMessage = "OS release: " + property;
-	_log.write(logMessage);
+	mainLog << _logName.get_logName(logMessage);
 	property = _utsname.version;
 	logMessage = "OS version: " + property;
-	_log.write(logMessage);
+	mainLog << _logName.get_logName(logMessage);
 #endif
 }
 
@@ -200,7 +214,7 @@ void Chat::writePrivate() {
 
 void Chat::checkMail() {
 	std::string logMessage = "Проверяем почту";
-	_log.write(logMessage);
+	mainLog << _logName.get_logName(logMessage);
 	// Считываем сообщение из сокета
 	std::string message = _net.getMessage();
 	// Выводим сообщение в консоль
@@ -224,23 +238,23 @@ bool Chat::terminate() {
 
 void Chat::connect_net() {
 	std::string logMessage = "Подключаемся к cерверу";
-	_log.write(logMessage);
+	mainLog << _logName.get_logName(logMessage);
 	_net.config(_net_IP, _net_port);
 }
 
 void Chat::connect_db() {
 	std::string logMessage = "Подключаемся к базе данных";
-	_log.write(logMessage);
+	mainLog << _logName.get_logName(logMessage);
 	_dataBase.connect(_dataBase_host, _dataBase_user, _dataBase_password, _dataBase_name);
 	// В пустой базе данных отсутствует пользователь с правами администратора.
 	// Для пустой базы данных добавляем администратора.
 	if (!_dataBase.find_user("root")) {
 		logMessage = "Добавляем пользователя с правами администратора";
-		_log.write(logMessage);
+		mainLog << _logName.get_logName(logMessage);
 		_dataBase.add_user(_rootLogin, _rootLogin, _rootPassword);
 	}
 	logMessage = "Считываем историю сообщений из базы данных";
-	_log.write(logMessage);
+	mainLog << _logName.get_logName(logMessage);
 	// Собщения из БД передаются в виде массива, каждая строка которого
 	//  имеет следующий формат:
 	// 1 элемент: имя отправителя;

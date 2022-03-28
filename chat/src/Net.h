@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Logger.h"
+#include "LogName.h"
 
 #include <string>
 #ifdef __linux__
@@ -17,14 +17,11 @@ class Net final {
 private:
 	/** Параметры соединения */
 	int _socketDescriptor;	/** дескриптор сокета */
-	uint16_t _port;		/** номер порта */
-	std::string _IP;	/** IP адресс */
-	int _connection;	/** дескриптор присоединенного сокета */
-	bool _isServer;		/** признак того, что приложение является сервером */
-
-	/** Журнал */
-	Logger _log;
-
+	uint16_t _port;			/** номер порта */
+	std::string _IP;		/** IP адресс */
+	int _connection;		/** дескриптор присоединенного сокета */
+	bool _isServer;			/** признак того, что приложение является сервером */
+	LogName _logName;		/** префикс для сообщений в журнал. */
 public:
 
 	Net();

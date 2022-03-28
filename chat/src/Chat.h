@@ -1,7 +1,6 @@
 #pragma once
 
 #include "DataBase.h"
-#include "Logger.h"
 #include "Net.h"
 
 #include <string>
@@ -17,8 +16,9 @@ constexpr int checkMailState = 6;
 
 class Chat final {
 private:
+	LogName _logName;			/** префикс для сообщений в журнал. */
 	std::string _currentUser;	/** имя текущего пользователя, находящегося в чате */
-	bool _userOnline;		/** признак наличия пользователя в чате */
+	bool _userOnline;			/** признак наличия пользователя в чате */
 
 	/** Параметры пользователя с правами администратора. */
 	std::string _rootLogin;		/** логин администратора */
@@ -32,16 +32,14 @@ private:
 	void connect_net();
 
 	/** Работа с базой данной. */
-	DataBase _dataBase;		/** объект БД */
-	std::string _dataBase_host;	/** адрес БД */
-	std::string _dataBase_user;	/** пользователь БД */
+	DataBase _dataBase;				/** объект БД */
+	std::string _dataBase_host;		/** адрес БД */
+	std::string _dataBase_user;		/** пользователь БД */
 	std::string _dataBase_password;	/** пароль пользователя БД */
-	std::string _dataBase_name;	/** имя БД */
+	std::string _dataBase_name;		/** имя БД */
 	// Подключение к базе данных.
 	void connect_db();
 
-	/** Работа с журналом */
-	Logger _log;
 	/** Вывод в консоль названия и номера версии операционной системы, в которой запущен чат. */
 	void show_config();
 

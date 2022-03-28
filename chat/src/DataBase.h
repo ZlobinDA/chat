@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Logger.h"
+#include "LogName.h"
 
 #if defined __linux__
 #include <mysql/mysql.h>
@@ -21,7 +21,7 @@ private:
 	std::string _password;	// пароль пользователя dbUser
 	std::string _name;		// имя базы данных
 	bool _isConnected;		// статус связи с базой данных: false - база данных недоступна, true - доступна.
-	Logger _log;			// журнал
+	LogName _logName;		// префикс для сообщений в журнал.
 
 	// Проверка наличие базы данных.
 	bool check_database();

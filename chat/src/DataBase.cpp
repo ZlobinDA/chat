@@ -2,6 +2,9 @@
 // PVS-Studio Static Code Analyzer for C, C++, C#, and Java: http://www.viva64.com
 
 #include "DataBase.h"
+#include "Logger.h"
+#include "MainLog.h"
+
 #include <iostream>
 
 bool DataBase::check_database() {
@@ -11,17 +14,17 @@ bool DataBase::check_database() {
 		_host.c_str(), _user.c_str(), _password.c_str(), NULL, 0, NULL, 0)) {
 		std::string error = mysql_error(&_descriptor);
 		logMessage = "Ошибка при подключении к серверу с базой данных: " + error;
-		_log.write(logMessage);
+		mainLog << _logName.get_logName(logMessage);
 		return false;
 	}
 	// Пытаемся создать базу данных. Если база данных существует, она не будет перезаписана.
 	logMessage = "Создаем базу данных " + _name + ", если она не существует";
-	_log.write(logMessage);
+	mainLog << _logName.get_logName(logMessage);
 	std::string query = "create database if not exists " + _name;
 	int result = mysql_query(&_descriptor, query.c_str());
 	if (result == 0) {
 		logMessage = "База данных успешно создана или обнаружена";
-		_log.write(logMessage);
+		mainLog << _logName.get_logName(logMessage);
 		return true;
 	}
 	return false;
@@ -33,40 +36,40 @@ bool DataBase::make_connection() {
 	//  не получится повторно подключиться.
 	mysql_init(&_descriptor);
 	logMessage = "Подключаемся к базе данных " + _name;
-	_log.write(logMessage);
+	mainLog << _logName.get_logName(logMessage);
 	if (!mysql_real_connect(&_descriptor,
 		_host.c_str(), _user.c_str(), _password.c_str(), _name.c_str(), 0, NULL, 0)) {
 		std::string error = mysql_error(&_descriptor);
 		logMessage = "Ошибка при подключении к базе данных: " + error;
-		_log.write(logMessage);
+		mainLog << _logName.get_logName(logMessage);
 		return false;
 	}
 	else {
 		logMessage = "Выполнено подключение к базе данных " + _name;
-		_log.write(logMessage);
+		mainLog << _logName.get_logName(logMessage);
 		return true;
 	}
 
 }
 
-DataBase::DataBase() : _isConnected(false), _log("DataBase") {
+DataBase::DataBase() : _isConnected(false), _logName("DataBase") {
 	std::string logMessage;
 	logMessage = "Вызван конструктор";
-	_log.write(logMessage);
+	mainLog << _logName.get_logName(logMessage);
 	logMessage = "Инициализируем дескриптор соединения с базой данных";
-	_log.write(logMessage);
+	mainLog << _logName.get_logName(logMessage);
 	mysql_init(&_descriptor);
 	if (&_descriptor == nullptr) {
 		std::string error = mysql_error(&_descriptor);
 		logMessage = "Ошибка при инициализации дескриптора соединения с базой данных: " + error;
-		_log.write(logMessage);
+		mainLog << _logName.get_logName(logMessage);
 		return;
 	}
 }
 
 DataBase::~DataBase() {
 	std::string logMessage = "Закрываем соединение с базой данных " + _name;
-	_log.write(logMessage);
+	mainLog << _logName.get_logName(logMessage);
 	mysql_close(&_descriptor);
 }
 
@@ -104,11 +107,11 @@ void DataBase::check_usersTable() {
 	if ((res = mysql_store_result(&_descriptor))) {
 		if ((row = mysql_fetch_row(res))) {
 			logMessage = "Найдена таблица users с данными пользователей";
-			_log.write(logMessage);
+			mainLog << _logName.get_logName(logMessage);
 		}
 		else {
 			logMessage = "Создаем таблицу users с данными пользователей";
-			_log.write(logMessage);
+			mainLog << _logName.get_logName(logMessage);
 			/**
 			* Таблица "Пользователи" содержит следующие данные:
 			*  - id пользователя. id является первичным ключом;
@@ -122,11 +125,11 @@ void DataBase::check_usersTable() {
 				"password varchar(255) not null)");
 			if (result == 0) {
 				logMessage = "Таблица users успешно создана";
-				_log.write(logMessage);
+				mainLog << _logName.get_logName(logMessage);
 			}
 			else {
 				logMessage = "Ошибка при создании таблицы users";
-				_log.write(logMessage);
+				mainLog << _logName.get_logName(logMessage);
 				_isConnected = false;
 			}
 		}
@@ -141,11 +144,11 @@ void DataBase::check_messagesTable() {
 	if ((res = mysql_store_result(&_descriptor))) {
 		if ((row = mysql_fetch_row(res))) {
 			logMessage = "Найдена таблица messages с сообщениями пользователей";
-			_log.write(logMessage);
+			mainLog << _logName.get_logName(logMessage);
 		}
 		else {
 			logMessage = "Создаем таблицу messages с сообщениями пользователей";
-			_log.write(logMessage);
+			mainLog << _logName.get_logName(logMessage);
 			/**
 			* Таблица "Сообщения" содержит следующие данные:
 			*  - id сообщения. id является первичным ключом;
@@ -179,7 +182,7 @@ std::string DataBase::get_id(const std::string& login) {
 	if (!_isConnected) return {};
 	std::string logMessage;
 	logMessage = "Запрос id пользователя по его логину";
-	_log.write(logMessage);
+	mainLog << _logName.get_logName(logMessage);
 	std::string query = "select id from users where login = '" + login + "'";
 	std::vector<std::string> id = get_data(query);
 	if (id.size() > 0) {
@@ -198,27 +201,27 @@ void DataBase::add_user(const std::string& name, const std::string& login, const
 	int result = mysql_query(&_descriptor, dbString.c_str());
 	if (result == 0) {
 		logMessage = "Пользователь " + name + " успешно добавлен в базу данных";
-		_log.write(logMessage);
+		mainLog << _logName.get_logName(logMessage);
 	}
 	else {
 		logMessage = "Ошибка! Пользователь " + name + "не был добавлен в базу данных";
-		_log.write(logMessage);
+		mainLog << _logName.get_logName(logMessage);
 	}
 }
 
 bool DataBase::find_user(const std::string& login) {
 	if (!_isConnected) return false;
 	std::string logMessage = "Ищем пользователя " + login + " в базе данных";
-	_log.write(logMessage);
+	mainLog << _logName.get_logName(logMessage);
 	std::string query = "select id from users where login='" + login + "'";
 	if (get_data(query).size() == 0) {
 		logMessage = "Пользователь не найден";
-		_log.write(logMessage);
+		mainLog << _logName.get_logName(logMessage);
 		return false;
 	}
 	else {
 		logMessage = "Пользователь найден";
-		_log.write(logMessage);
+		mainLog << _logName.get_logName(logMessage);
 		return true;
 	}
 }
@@ -229,7 +232,7 @@ int DataBase::users_count() {
 	//  равно числу записей в таблице.
 	std::string logMessage;
 	logMessage = "Запрос числа пользователей в базе данных";
-	_log.write(logMessage);
+	mainLog << _logName.get_logName(logMessage);
 	std::string query = "select count(id) from users";
 	std::vector<std::string> id = get_data(query);
 	if (id.size() > 0) {
@@ -243,7 +246,7 @@ int DataBase::users_count() {
 std::vector <std::string> DataBase::get_users() {
 	if (!_isConnected) return {};
 	std::string logMessage = "Запрос списка пользователей в базе данных";
-	_log.write(logMessage);
+	mainLog << _logName.get_logName(logMessage);
 	std::string query = "select login from users";
 	return get_data(query);
 }
@@ -251,7 +254,7 @@ std::vector <std::string> DataBase::get_users() {
 bool DataBase::check_password(std::string& login, std::string& password) {
 	if (!_isConnected) return false;
 	std::string logMessage = "Проверяем пароль для пользователя с логином " + login;
-	_log.write(logMessage);
+	mainLog << _logName.get_logName(logMessage);
 	std::string query = "select password from users where login='" + login + "'";
 	std::vector<std::string> _currentPassword = get_data(query);
 	if (_currentPassword.size() > 0) {
@@ -265,7 +268,7 @@ bool DataBase::check_password(std::string& login, std::string& password) {
 std::string DataBase::get_name(const std::string& login) {
 	if (!_isConnected) return {};
 	std::string logMessage = "Запрос имени пользователя по его логину";
-	_log.write(logMessage);
+	mainLog << _logName.get_logName(logMessage);
 	std::string query = "select name from users where login='" + login + "'";
 	return get_data(query).at(0);
 }
@@ -273,7 +276,7 @@ std::string DataBase::get_name(const std::string& login) {
 void DataBase::add_message(const std::string& sender, const std::string& reciever, const std::string& message) {
 	if (!_isConnected) return;
 	std::string logMessage = "Добавляем сообщение в базу данных";
-	_log.write(logMessage);
+	mainLog << _logName.get_logName(logMessage);
 	std::string sender_id = get_id(sender);
 	std::string reciever_id;
 	if (reciever != "all") {
@@ -289,19 +292,19 @@ void DataBase::add_message(const std::string& sender, const std::string& recieve
 	int result = mysql_query(&_descriptor, dbString.c_str());
 	if (result == 0) {
 		logMessage = "Сообщение успешно добавлен в базу данных";
-		_log.write(logMessage);
+		mainLog << _logName.get_logName(logMessage);
 	}
 	else {
 		std::string error = mysql_error(&_descriptor);
 		logMessage = "Ошибка! Сообщение не было добавлен в базу данных: " + error;
-		_log.write(logMessage);
+		mainLog << _logName.get_logName(logMessage);
 	}
 }
 
 std::vector <std::vector<std::string>> DataBase::get_messages() {
 	if (!_isConnected) return {};
 	std::string logMessage = "Запрос сообщений из базы данных";
-	_log.write(logMessage);
+	mainLog << _logName.get_logName(logMessage);
 	std::string query = "select sender_id, reciever_id, message from messages";
 	mysql_query(&_descriptor, query.c_str());
 	MYSQL_RES* res;

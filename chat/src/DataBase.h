@@ -1,12 +1,13 @@
 #pragma once
 
-#include "LogName.h"
+#include "Logger.h"
 
 #if defined __linux__
 #include <mysql/mysql.h>
 #elif defined (_WIN32) || defined (_WIN64)
 #include <mysql.h>
 #endif
+#include <fstream>
 #include <string>
 #include <vector>
 
@@ -21,7 +22,9 @@ private:
 	std::string _password;	// пароль пользователя dbUser
 	std::string _name;		// имя базы данных
 	bool _isConnected;		// статус связи с базой данных: false - база данных недоступна, true - доступна.
-	LogName _logName;		// префикс для сообщений в журнал.
+
+	/** Работа с журналом сообщений. */
+	Logger* _log;			/**< объект для работы с журналом */
 
 	// Проверка наличие базы данных.
 	bool check_database();
@@ -36,7 +39,7 @@ private:
 	// Запрос id пользователя по его логину.
 	std::string get_id(const std::string& login);
 public:
-	DataBase();
+	DataBase(Logger* log);
 	~DataBase();
 
 	// Подключение к БД.

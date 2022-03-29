@@ -25,8 +25,6 @@
     <ClInclude Include="src\DataBase.h" />
     <ClInclude Include="src\Language.h" />
     <ClInclude Include="src\Logger.h" />
-    <ClInclude Include="src\LogName.h" />
-    <ClInclude Include="src\MainLog.h" />
     <ClInclude Include="src\Net.h" />
   </ItemGroup>
   <ItemGroup>
@@ -35,7 +33,6 @@
     <ClCompile Include="src\Language.cpp" />
     <ClCompile Include="src\Logger.cxx" />
     <ClCompile Include="src\Main.cpp" />
-    <ClCompile Include="src\MainLog.cpp" />
     <ClCompile Include="src\Net.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

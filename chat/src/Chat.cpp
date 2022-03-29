@@ -3,8 +3,6 @@
 
 #include "Chat.h"
 #include "ChatGetline.h"
-#include "Logger.h"
-#include "MainLog.h"
 
 #include <cstring>
 #include <iostream>
@@ -16,24 +14,19 @@
 
 Chat::Chat(const std::string& rootLogin, const std::string& rootPassword,
 	const std::string& net_IP, const uint16_t net_port,
-	const std::string& dataBase_host, const std::string& dataBase_user, const std::string& dataBase_password, const std::string& dataBase_name) : 
-	_logName("Chat"),
+	const std::string& dataBase_host, const std::string& dataBase_user, const std::string& dataBase_password, const std::string& dataBase_name) :
 	_userOnline(false),
+	_language(LanguageType::russian), _mainLog("main.log", _language), _messageLog("message.log", _language),
 	_rootLogin(rootLogin), _rootPassword(rootPassword),
-	_net_IP(net_IP), _net_port(net_port),
-	_dataBase_host(dataBase_host), _dataBase_user(dataBase_user), _dataBase_password(dataBase_password), _dataBase_name(dataBase_name) {
-	std::string logMessage = "Вызван конструктор";
-	mainLog << _logName.get_logName(logMessage);
-	// Печатаем в консоль информации об операционной системе, в которой запущен чат.
-	std::thread thread_config(&Chat::show_config, this);
+	_net(&_mainLog), _net_IP(net_IP), _net_port(net_port),
+	_dataBase(&_mainLog), _dataBase_host(dataBase_host), _dataBase_user(dataBase_user), _dataBase_password(dataBase_password), _dataBase_name(dataBase_name) {
+	// Печатаем информацию об операционной системе, в которой запущен чат.
+	show_config();
 	// Подключаемся к базе данных.
 	std::thread thread_db(&Chat::connect_db, this);
 	// Подключаемся к серверу.
 	std::thread thread_net(&Chat::connect_net, this);
 
-	if (thread_config.joinable()) {
-		thread_config.join();
-	}
 	if (thread_db.joinable()) {
 		thread_db.join();
 	}
@@ -43,8 +36,6 @@ Chat::Chat(const std::string& rootLogin, const std::string& rootPassword,
 }
 
 Chat::~Chat() {
-	std::string logMessage = "Вызван деструктор";
-	mainLog << _logName.get_logName(logMessage);
 }
 
 int Chat::run() {
@@ -111,7 +102,7 @@ void Chat::show_config() {
 	// ОС Windows
 #if defined (_WIN32) || defined (_WIN64)
 	logMessage = "OS name: Windows";
-	mainLog << _logName.get_logName(logMessage);
+	_mainLog << logMessage;
 #endif
 	// ОС Linux
 #if defined(__linux__)
@@ -119,19 +110,19 @@ void Chat::show_config() {
 	uname(&_utsname);
 	std::string property = _utsname.sysname;
 	logMessage = "OS name: " + property;
-	mainLog << _logName.get_logName(logMessage);
+	_mainLog << logMessage;
 	property = _utsname.release;
 	logMessage = "OS release: " + property;
-	mainLog << _logName.get_logName(logMessage);
+	_mainLog << logMessage;
 	property = _utsname.version;
 	logMessage = "OS version: " + property;
-	mainLog << _logName.get_logName(logMessage);
+	_mainLog << logMessage;
 #endif
 }
 
 void Chat::registration() {
 	std::cout << "При вводе личной информации используйте буквы английского алфавита и цифры. "
-				 "Буквы русского алфавита и дополнительные символы запрещены!" << std::endl;
+		"Буквы русского алфавита и дополнительные символы запрещены!" << std::endl;
 
 	std::cout << "Введите свое имя:" << std::endl;
 	std::string name = chatGetline<std::string>();
@@ -141,7 +132,7 @@ void Chat::registration() {
 	// Логин должен быть уникальным. Если логин уже существует, повторный запрос логина.
 	if (_dataBase.find_user(login)) {
 		std::cout << "Вы не можете зарегистрироваться! Пользователь [" << login
-				<< "] уже зарегистрирован" << std::endl;
+			<< "] уже зарегистрирован" << std::endl;
 		return;
 	}
 
@@ -187,6 +178,7 @@ void Chat::writePublic() {
 	// Выводим в консоль.
 	message = "[" + _currentUser + "] написал всем: " + message;
 	std::cout << message << std::endl;
+	_messageLog << message;
 	// Отправляем сообщение в сокет.
 	_net.sendMessage(message);
 }
@@ -205,16 +197,16 @@ void Chat::writePrivate() {
 	// Сохраняем сообщение в БД.
 	_dataBase.add_message(_currentUser, receiver, message);
 	// Выводим сообщение в консоль.
-	std::cout << "[" << receiver << "] у вас личное сообщение от пользователя " <<
-		"[" << _currentUser << "]: " << message << std::endl;
-	// Отправляем сообщение в сокет.
 	message = "[" + _currentUser + "] отправил сообщение " + "[" + receiver + "]: " + message;
+	std::cout << message << std::endl;
+	_messageLog << message;
+	// Отправляем сообщение в сокет.
 	_net.sendMessage(message);
 }
 
 void Chat::checkMail() {
 	std::string logMessage = "Проверяем почту";
-	mainLog << _logName.get_logName(logMessage);
+	_mainLog << logMessage;
 	// Считываем сообщение из сокета
 	std::string message = _net.getMessage();
 	// Выводим сообщение в консоль
@@ -237,24 +229,30 @@ bool Chat::terminate() {
 }
 
 void Chat::connect_net() {
-	std::string logMessage = "Подключаемся к cерверу";
-	mainLog << _logName.get_logName(logMessage);
+	std::string logMessage;
+	if (_language.isEnglish()) logMessage = "Connect to the server";
+	if (_language.isRussian()) logMessage = "Подключаемся к cерверу";
+	_mainLog << logMessage;
+
 	_net.config(_net_IP, _net_port);
 }
 
 void Chat::connect_db() {
-	std::string logMessage = "Подключаемся к базе данных";
-	mainLog << _logName.get_logName(logMessage);
+	std::string logMessage;
+	if (_language.isEnglish()) logMessage = "Connect to data base";
+	if (_language.isRussian()) logMessage = "Подключаемся к базе данных";
+	_mainLog << logMessage;
+
 	_dataBase.connect(_dataBase_host, _dataBase_user, _dataBase_password, _dataBase_name);
 	// В пустой базе данных отсутствует пользователь с правами администратора.
 	// Для пустой базы данных добавляем администратора.
 	if (!_dataBase.find_user("root")) {
 		logMessage = "Добавляем пользователя с правами администратора";
-		mainLog << _logName.get_logName(logMessage);
+		_mainLog << logMessage;
 		_dataBase.add_user(_rootLogin, _rootLogin, _rootPassword);
 	}
 	logMessage = "Считываем историю сообщений из базы данных";
-	mainLog << _logName.get_logName(logMessage);
+	_mainLog << logMessage;
 	// Собщения из БД передаются в виде массива, каждая строка которого
 	//  имеет следующий формат:
 	// 1 элемент: имя отправителя;
@@ -274,5 +272,11 @@ void Chat::connect_db() {
 				"[" + sender + "]: " + message;
 		}
 		std::cout << consoleMessage << std::endl;
+	}
+
+
+	std::string line;
+	while (true) {
+		_messageLog >> line;
 	}
 }

@@ -2,17 +2,16 @@
 // PVS-Studio Static Code Analyzer for C, C++, C#, and Java: http://www.viva64.com
 
 #include "Net.h"
-#include "Logger.h"
-#include "MainLog.h"
 
 #include <cstring>
 
-Net::Net() : _socketDescriptor(0), _port(0), _connection(0), _isServer(false), _logName("Net") {
+Net::Net(Logger* log) :
+	_socketDescriptor(0), _port(0), _connection(0), _isServer(false), _log(log) {
 }
 
 Net::~Net() {
 	std::string logMessage = "Закрываем сокет, завершаем соединение";
-	mainLog << _logName.get_logName(logMessage);
+	*_log << logMessage;
 #ifdef __linux__
 	close(_socketDescriptor);
 #endif
@@ -26,7 +25,7 @@ void Net::config(const std::string& IP, const uint16_t port) {
 	_socketDescriptor = socket(AF_INET, SOCK_STREAM, 0);
 	if (_socketDescriptor == -1) {
 		std::string logMessage = "Ошибка при создании сокета!";
-		mainLog << _logName.get_logName(logMessage);
+		*_log << logMessage;
 		// Чат продолжит свою работу локально.
 		return;
 	}
@@ -41,7 +40,7 @@ void Net::config(const std::string& IP, const uint16_t port) {
 	int status = connect(_socketDescriptor, (sockaddr*)&_socketAddress, sizeof(_socketAddress));
 	if (status == -1) {
 		std::string logMessage = "Сервер не найден! Приложение будет настроено как сервер";
-		mainLog << _logName.get_logName(logMessage);
+		*_log << logMessage;
 		_isServer = true;
 		// Настраиваем приложение как сервер,
 		//  принимающий запросы с любых IP.
@@ -50,7 +49,7 @@ void Net::config(const std::string& IP, const uint16_t port) {
 		status = bind(_socketDescriptor, (struct sockaddr*)&_socketAddress, sizeof(_socketAddress));
 		if (status == -1) {
 			logMessage = "Ошибка при привязке сокета!";
-			mainLog << _logName.get_logName(logMessage);
+			*_log << logMessage;
 			// Чат продолжит свою работу локально.
 			return;
 		}
@@ -58,38 +57,38 @@ void Net::config(const std::string& IP, const uint16_t port) {
 		status = listen(_socketDescriptor, 5);
 		if (status == -1) {
 			logMessage = "Ошибка при переводе сокета в режим ожидания!";
-			mainLog << _logName.get_logName(logMessage);
+			*_log << logMessage;
 			// Чат продолжит свою работу локально.
 			return;
 		}
 		else {
 			logMessage = "Сокет переведен в режим ожидания";
-			mainLog << _logName.get_logName(logMessage);
+			*_log << logMessage;
 		}
 		sockaddr_in client;
 		socklen_t lenght = sizeof(client);
 		logMessage = "Ждем первого клиента...";
-		mainLog << _logName.get_logName(logMessage);
+		*_log << logMessage;
 		_connection = accept(_socketDescriptor, (sockaddr*)&client, &lenght);
 		if (_connection == -1) {
 			logMessage = "Ошибка! Сервер не может получать сообщения";
-			mainLog << _logName.get_logName(logMessage);
+			*_log << logMessage;
 			// Чат продолжит свою работу локально.
 			return;
 		}
 		logMessage = "Первый клиент подключен";
-		mainLog << _logName.get_logName(logMessage);
+		*_log << logMessage;
 	}
 	else {
 		std::string logMessage = "Установлено соединение с сервером";
-		mainLog << _logName.get_logName(logMessage);
+		*_log << logMessage;
 	}
 #endif
 }
 
 std::string Net::getMessage() {
 	std::string logMessage = "Читаем сообщение из сокета";
-	mainLog << _logName.get_logName(logMessage);
+	*_log << logMessage;
 	char c_message[netMessageLen];
 #ifdef __linux__
 	bzero(c_message, sizeof(c_message));
@@ -105,13 +104,13 @@ std::string Net::getMessage() {
 #endif
 	std::string message = c_message;
 	logMessage = "Текст полученного сообщения: " + message;
-	mainLog << _logName.get_logName(logMessage);
+	*_log << logMessage;
 	return message;
 }
 
 void Net::sendMessage(const std::string& message) {
 	std::string logMessage = "Отправляем сообщение в сокет: " + message;
-	mainLog << _logName.get_logName(logMessage);
+	*_log << logMessage;
 #ifdef __linux__
 	// Отправляем сообщение в сокет.
 	ssize_t bytes = 0;
@@ -125,11 +124,11 @@ void Net::sendMessage(const std::string& message) {
 	}
 	if (bytes >= 0) {
 		logMessage = "Сообщение успешно отправлено";
-		mainLog << _logName.get_logName(logMessage);
+		*_log << logMessage;
 	}
 	else {
 		logMessage = "Ошибка при отправке сообщения";
-		mainLog << _logName.get_logName(logMessage);
+		*_log << logMessage;
 }
 #endif
 }

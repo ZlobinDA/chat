@@ -1,11 +1,11 @@
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
-
 /**
 *
 * @file
-* @brief Описание класса для работы с журналом сообщений.
+* @brief Класса для работы с журналом сообщений.
 *
+* Сообщения записываются в указанный файл.
+* Сообщения могут быть записаны на русском или английском языках.
+* Перед сообщением может быть добавлен префик - метка объекта, который записываает сообщение.
 */
 
 #pragma once
@@ -18,51 +18,34 @@
 
 class Logger {
 private:
-	std::ofstream _logFile;	/**< объект класса ofstream, с которым связан файл журнала */
-	std::string _path;		/**< путь до файла журнала */
-	bool _isOpen;			/**< статус файла журнала: true - открыт, false - закрыт */
+	std::string _path;		/**< путь до файла */
+	std::fstream _log;		/**< объект класса ofstream, с которым связан файл журнала */
 	Language _language;		/**< язык, используемые для вывода сообщений в журнал */
-	std::mutex _mutex;		/**<  */
-	std::once_flag _flag;	/**<  */
+	std::mutex _mutex;		/**< мьютекс для защиты записи в файл */
+
+	/** Открытие файла с журналом сообщений. */
+	void open();
+	/** Закрытие файла с журналом сообщений. */
+	void close();
 public:
 	/**
 	* Конструктор с параметрами. Для создания объекта с привязкой к файлу.
-	* @param path - путь до файла журнала.
+	* @param path - путь до файла;
+	* @param language - язык сообщений.
 	*/
-	Logger(const std::string& logName);
-
-	/**
-	* Конструктор копирования запрещен.
-	*/
-	Logger(const Logger&) = delete;
-
-	/**
-	* Конструктор присваивания запрещен.
-	*/
-	Logger& operator=(const Logger&) = delete;
-
-	/** Деструктор. Выполняет закрытие файла. */
+	Logger(const std::string& path, const Language& language);
+	/** Деструктор */
 	~Logger();
 
 	/**
-	* Открытие файла журнала.
-	*/
-	void open();
-
-	/**
-	* Запись сообщений в журнал. Сообщения могут печататься в файл и выводиться в консоль.
+	* Запись сообщений в журнал.
 	* @param message - сообщение для записи в файл.
 	*/
 	void operator << (const std::string& message);
 
 	/**
-	* Состояние файла.
-	* @param file - указатель на проверяемый файл.
-	* @return true - файл открыт и доступен для записи, false - проблемы с файлом.
+	* Чтение строки из журнала.
+	* @return - строка из файла.
 	*/
-	static bool getStatus(Logger* file);
-
-	/** Закрытие файла журнала. */
-	void close();
-
+	std::string operator >> (const std::string& message);
 };

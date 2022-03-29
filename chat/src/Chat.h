@@ -2,7 +2,11 @@
 
 #include "DataBase.h"
 #include "Net.h"
+#include "Language.h"
+#include "Logger.h"
 
+#include <fstream>
+#include <mutex>
 #include <string>
 #include <vector>
 
@@ -16,22 +20,24 @@ constexpr int checkMailState = 6;
 
 class Chat final {
 private:
-	LogName _logName;			/** префикс для сообщений в журнал. */
 	std::string _currentUser;	/** имя текущего пользователя, находящегося в чате */
 	bool _userOnline;			/** признак наличия пользователя в чате */
 
-	/** Параметры пользователя с правами администратора. */
-	std::string _rootLogin;		/** логин администратора */
-	std::string _rootPassword;	/** пароль администратора */
+	/** Работа с журналом сообщений. */
+	Language _language;			/**< язык, используемые для вывода сообщений в журнал */
+	Logger _mainLog;			/**< журнал основных событий */
+	Logger _messageLog;			/**< журнал сообщений */
 
 	/** Работа с сетью. */
-	Net _net;			/** объект для работы с сетью */
+	Net _net;					/** объект для работы с сетью */
 	std::string _net_IP;		/** IP сервера */
 	uint16_t _net_port;			/** номер порта сервера */
 	// Подключение к серверу.
 	void connect_net();
 
 	/** Работа с базой данной. */
+	std::string _rootLogin;			/** логин администратора */
+	std::string _rootPassword;		/** пароль администратора */
 	DataBase _dataBase;				/** объект БД */
 	std::string _dataBase_host;		/** адрес БД */
 	std::string _dataBase_user;		/** пользователь БД */

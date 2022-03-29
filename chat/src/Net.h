@@ -1,7 +1,8 @@
 #pragma once
 
-#include "LogName.h"
+#include "Logger.h"
 
+#include <fstream>
 #include <string>
 #ifdef __linux__
 #include <unistd.h>
@@ -21,10 +22,12 @@ private:
 	std::string _IP;		/** IP адресс */
 	int _connection;		/** дескриптор присоединенного сокета */
 	bool _isServer;			/** признак того, что приложение является сервером */
-	LogName _logName;		/** префикс для сообщений в журнал. */
+
+	/** Работа с журналом сообщений. */
+	Logger* _log;			/**< объект для работы с журналом */
 public:
 
-	Net();
+	Net(Logger* log);
 	~Net();
 
 	// Настройка сети.

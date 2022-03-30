@@ -4,7 +4,7 @@ CC=g++
 # -g - генерировать отладочную информацию
 # -Wall - включить все предупреждения
 # -std=c++17 - использовать стандарт с++17
-CFLAGS=-g -Wall -std=c++17 -D "_DEBUG"
+CFLAGS=-g -Wall -std=c++17 -D "_DEBUG" -pthread
 # Исходные тексты
 SOURCES=Chat.cpp DataBase.cpp Language.cpp Logger.cpp Main.cpp Net.cpp
 # Объектные файлы. Получаем из исходников заменой .cpp на .o

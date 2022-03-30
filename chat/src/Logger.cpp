@@ -66,6 +66,10 @@ void Logger::operator << (const std::string& message) {
 		auto timeObject = std::put_time(std::localtime(&timeT), "%Y-%m-%d %X");
 		/** Печатаем сообщение с датой и временем в журнал. */
 		_log << "[" << timeObject << "] - " << message << std::endl;
+#ifdef _DEBUG
+		std::cout << "[" << timeObject << "] - " << message << std::endl;
+#endif // _DEBUG
+
 		_log.flush();
 	}
 	_mutex.unlock();

@@ -14,9 +14,10 @@ Logger::Logger(const std::string& path, const Language& language) : _path(path),
 }
 
 void Logger::open() {
-	// Открываем файл для вывода информации.
-	// Предыдущее содержимое файла будет удалено.
-	_log.open(_path, std::ios::out | std::ios::in | std::ios::trunc);
+	// Открываем файл для чтения и записи сообщений.
+	// Новые сообщения будут дописаны в конец файла.
+	// Попытка 1. Предполагаем, что файл существует.
+	_log.open(_path, std::ios::out | std::ios::in | std::ios::ate);
 	if (_log) {
 		std::string logMessage;
 		if (_language.isEnglish()) logMessage = "File is opened: " + _path;
@@ -24,10 +25,20 @@ void Logger::open() {
 		*this << logMessage;
 	}
 	else {
+		// Файл не найден. Открываем новый файл.
+		_log.open(_path, std::ios::out);
+		if (_log) {
+			std::string logMessage;
+			if (_language.isEnglish()) logMessage = "File is opened: " + _path;
+			if (_language.isRussian()) logMessage = "Открыт файл: " + _path;
+			*this << logMessage;
+		}
+		else {
 #ifdef _DEBUG
-		if (_language.isEnglish()) std::cout << "Error at file openning: " + _path;
-		if (_language.isRussian()) std::cout << "Ошибка открытия файла: " + _path;
+			if (_language.isEnglish()) std::cout << "Error at file openning: " + _path;
+			if (_language.isRussian()) std::cout << "Ошибка открытия файла: " + _path;
 #endif // _DEBUG
+		}
 	}
 }
 
@@ -48,6 +59,7 @@ void Logger::operator << (const std::string& message) {
 	_mutex.lock();
 	/** Проверяем, доступен ли файл */
 	if (_log.is_open()) {
+		_log.clear();;
 		/** Получаем текущее время в формате "год.месяц.дата часы:минуты:секунды". */
 		auto timePoint = std::chrono::system_clock::now();
 		auto timeT = std::chrono::system_clock::to_time_t(timePoint);
@@ -59,13 +71,22 @@ void Logger::operator << (const std::string& message) {
 	_mutex.unlock();
 }
 
-std::string Logger::operator>>(const std::string& message) {
-	std::string line;
+void Logger::operator >> (std::string& line) {
+	// Читаем сообщение из файла, после чего запоминаем положение каретки.
+	static std::streamoff position = 0;
+	line.clear();
 	_mutex.lock();
-	/** Проверяем, доступен ли файл */
-	if (_log.is_open()) {
+	if (_log.is_open() && position != -1) {
+		_log.seekg(position);
 		getline(_log, line);
+		position = _log.tellg();
+		_mutex.unlock();
+		return;
+	}
+	// Тест. Считаем, что файл считывается от начала до конца.
+	// Сбрасываем положение каретки, чтобы в файл можно было записывать инофрмацию.
+	if (_log.is_open() && position == -1) {
+		_log.seekg(0);
 	}
 	_mutex.unlock();
-	return line;
 }

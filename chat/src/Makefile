@@ -6,7 +6,7 @@ CC=g++
 # -std=c++17 - использовать стандарт с++17
 CFLAGS=-g -Wall -std=c++17 -D "_DEBUG"
 # Исходные тексты
-SOURCES=Chat.cpp DataBase.cpp Logger.cpp Main.cpp Net.cpp
+SOURCES=Chat.cpp DataBase.cpp Language.cpp Logger.cpp Main.cpp Net.cpp
 # Объектные файлы. Получаем из исходников заменой .cpp на .o
 OBJECTS=$(SOURCES:.cpp=.o)
 # Подключаемые библиотеки

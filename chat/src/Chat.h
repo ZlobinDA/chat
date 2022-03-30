@@ -67,7 +67,7 @@ public:
 	Chat(const std::string& rootLogin, const std::string& rootPassword,
 		const std::string& net_IP, const uint16_t net_port,
 		const std::string& dataBase_host, const std::string& dataBase_user, const std::string& dataBase_password, const std::string& dataBase_name);
-	~Chat();
+	~Chat() = default;
 	
 	/** Метод для запуска чата. Работа чата организована в виде бесконечного цикла. */
 	int run();

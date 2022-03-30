@@ -45,7 +45,7 @@ public:
 
 	/**
 	* Чтение строки из журнала.
-	* @return - строка из файла.
+	* @param - строка, считанная из файла.
 	*/
-	std::string operator >> (const std::string& message);
+	void operator >> (std::string& line);
 };

@@ -17,11 +17,36 @@ Chat::Chat(const std::string& rootLogin, const std::string& rootPassword,
 	const std::string& dataBase_host, const std::string& dataBase_user, const std::string& dataBase_password, const std::string& dataBase_name) :
 	_userOnline(false),
 	_language(LanguageType::russian), _mainLog("main.log", _language), _messageLog("message.log", _language),
-	_rootLogin(rootLogin), _rootPassword(rootPassword),
 	_net(&_mainLog), _net_IP(net_IP), _net_port(net_port),
+	_rootLogin(rootLogin), _rootPassword(rootPassword),
 	_dataBase(&_mainLog), _dataBase_host(dataBase_host), _dataBase_user(dataBase_user), _dataBase_password(dataBase_password), _dataBase_name(dataBase_name) {
 	// Печатаем информацию об операционной системе, в которой запущен чат.
 	show_config();
+
+	/******************************************************************/
+	/*********** Тест чтения сообщений из файла в нескольких потоках **/
+	/******************************************************************/
+	// Читаем сообщения из файда message.log и записываем считанные сообщения
+	//  в файл main.log.
+	auto read_messages = [this]() {
+		std::string line;
+		do {
+			_messageLog >> line;
+			if (!line.empty()) _mainLog << line;
+		} while (!line.empty());
+	};
+	std::thread thread1_messages(read_messages);
+	std::thread thread2_messages(read_messages);
+
+	if (thread1_messages.joinable()) {
+		thread1_messages.join();
+	}
+
+	if (thread2_messages.joinable()) {
+		thread2_messages.join();
+	}
+	/******************************************************************/
+
 	// Подключаемся к базе данных.
 	std::thread thread_db(&Chat::connect_db, this);
 	// Подключаемся к серверу.
@@ -33,9 +58,6 @@ Chat::Chat(const std::string& rootLogin, const std::string& rootPassword,
 	if (thread_net.joinable()) {
 		thread_net.join();
 	}
-}
-
-Chat::~Chat() {
 }
 
 int Chat::run() {
@@ -272,11 +294,5 @@ void Chat::connect_db() {
 				"[" + sender + "]: " + message;
 		}
 		std::cout << consoleMessage << std::endl;
-	}
-
-
-	std::string line;
-	while (true) {
-		_messageLog >> line;
 	}
 }
